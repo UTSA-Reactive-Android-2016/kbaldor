@@ -2,6 +2,7 @@ package com.example.kbaldor.myfirstapplication;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -65,4 +66,9 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("MainActivity.onRestart called.");
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+        System.out.println("MainActivity.onSaveInstanceState called.");
+    }
 }
