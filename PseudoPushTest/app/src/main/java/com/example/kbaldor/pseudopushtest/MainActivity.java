@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -56,8 +57,9 @@ public class MainActivity extends AppCompatActivity {
         EditText editText = (EditText)findViewById(R.id.edit_server);
         String server = String.format("http://%s:3000/counter",editText.getText());
         thread = new PseudoPushThread(LocalBroadcastManager.getInstance(this),server);
-//        thread = new PseudoPushThread(LocalBroadcastManager.getInstance(this),"http://129.162.166.52:3000/counter");
-        getPreferences(MODE_PRIVATE).edit().putString("SERVER_IP",server);
+        SharedPreferences.Editor editor = getPreferences(MODE_PRIVATE).edit();
+        editor.putString("SERVER_IP",editText.getText().toString());
+        editor.commit();
         thread.start();
 
     }
@@ -76,9 +78,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if(thread != null){
-            thread.cancel();
-        }
-        thread = null;
+//        if(thread != null){
+//            thread.cancel();
+//        }
+//        thread = null;
     }
 }
