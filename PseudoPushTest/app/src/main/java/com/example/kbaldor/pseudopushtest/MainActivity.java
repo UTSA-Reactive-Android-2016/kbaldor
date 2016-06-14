@@ -7,6 +7,8 @@ import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
@@ -34,6 +36,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 },
                 new IntentFilter(PseudoPushThread.ERROR_ACTION));
+        String server = getPreferences(MODE_PRIVATE).getString("SERVER_IP","");
+        if(!server.isEmpty()){
+            ((EditText)findViewById(R.id.edit_server)).setText(server);
+        }
     }
 
 
@@ -43,11 +49,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     PseudoPushThread thread = null;
+    public void startPull(View view){
+        if(thread != null){
+            thread.cancel();
+        }
+        EditText editText = (EditText)findViewById(R.id.edit_server);
+        String server = String.format("http://%s:3000/counter",editText.getText());
+        thread = new PseudoPushThread(LocalBroadcastManager.getInstance(this),server);
+//        thread = new PseudoPushThread(LocalBroadcastManager.getInstance(this),"http://129.162.166.52:3000/counter");
+        getPreferences(MODE_PRIVATE).edit().putString("SERVER_IP",server);
+        thread.start();
+
+    }
+
+    public void stopPull(View view){
+        if(thread != null){
+            thread.cancel();
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        thread = new PseudoPushThread(LocalBroadcastManager.getInstance(this),"http://129.162.166.52:3000/counter");
-        thread.start();
     }
 
     @Override
