@@ -44,9 +44,16 @@ public class PseudoPushThread extends Thread {
                 conn.connect();
                 int response = conn.getResponseCode();
                 Log.d(DEBUG_TAG,"Got response: "+response);
+
                 is = conn.getInputStream();
-                JSONObject json = new JSONObject(readIS(is,1000));
-                broadcastManager.sendBroadcast(new Intent(COUNT_ACTION).putExtra(EXTRA_COUNT,json.getInt("count")));
+                String strResponse = readIS(is,1000);
+                Log.d(DEBUG_TAG,"Got JSON: "+strResponse);
+
+                JSONObject json = new JSONObject(strResponse);
+                if(shouldRun()) {
+                    broadcastManager.sendBroadcast(new Intent(COUNT_ACTION).putExtra(EXTRA_COUNT, json.getInt("count")));
+                }
+
             } catch (MalformedURLException e) {
                 e.printStackTrace();
                 broadcastManager.sendBroadcast(new Intent(ERROR_ACTION));

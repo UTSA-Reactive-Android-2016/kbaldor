@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new IntentFilter(PseudoPushThread.ERROR_ACTION));
         String server = getPreferences(MODE_PRIVATE).getString("SERVER_IP","");
+
         if(!server.isEmpty()){
             ((EditText)findViewById(R.id.edit_server)).setText(server);
         }

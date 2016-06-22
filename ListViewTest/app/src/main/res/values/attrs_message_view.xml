@@ -1,0 +1,6 @@
+<resources>
+    <declare-styleable name="MessageView">
+        <attr name="textSize" format="dimension" />
+        <attr name="barColor" format="color" />
+    </declare-styleable>
+</resources>

@@ -1,190 +1,121 @@
 package com.example.kbaldor.listviewtest;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
-import android.text.TextPaint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 /**
  * TODO: document your custom view class.
  */
 public class MessageView extends View {
-    private String mExampleString = "Initial Value"; // TODO: use a default from R.string...
-    private int mExampleColor = Color.RED; // TODO: use a default from R.color...
-    private float mExampleDimension = 0; // TODO: use a default from R.dimen...
+    Message message;
+    int barColor;
+    float textSize;
+    Rect  textBounds = new Rect();
 
-    private Drawable mExampleDrawable;
+    ValueAnimator animator;
 
-    private TextPaint mTextPaint;
-    private float mTextWidth;
-    private float mTextHeight;
+    public void setMessage(Message message){
+        this.message = message;
+        textPaint.getTextBounds(message.getMessage(),0,message.getMessage().length(), textBounds);
 
-    public MessageView(Context context) {
-        super(context);
-        init(null, 0);
+        animator = new ValueAnimator();
+
+        long ttl_ms = message.timeToLive_ms;
+
+        animator.setDuration(ttl_ms);
+
+        animator.setFloatValues(0,1);
+
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                invalidate();
+            }
+        });
+
+        animator.start();
+
     }
 
     public MessageView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(attrs, 0);
-    }
 
-    public MessageView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        init(attrs, defStyle);
-    }
+        TypedArray a = context.getTheme().obtainStyledAttributes(
+                attrs,
+                R.styleable.MessageView,
+                0, 0);
 
-    private void init(AttributeSet attrs, int defStyle) {
-        // Load attributes
-        final TypedArray a = getContext().obtainStyledAttributes(
-                attrs, R.styleable.MessageView, defStyle, 0);
-
-//        mExampleString = a.getString(
-//                R.styleable.MessageView_exampleString);
-        mExampleColor = a.getColor(
-                R.styleable.MessageView_exampleColor,
-                mExampleColor);
-        // Use getDimensionPixelSize or getDimensionPixelOffset when dealing with
-        // values that should fall on pixel boundaries.
-        mExampleDimension = a.getDimension(
-                R.styleable.MessageView_exampleDimension,
-                mExampleDimension);
-
-        if (a.hasValue(R.styleable.MessageView_exampleDrawable)) {
-            mExampleDrawable = a.getDrawable(
-                    R.styleable.MessageView_exampleDrawable);
-            mExampleDrawable.setCallback(this);
+        try {
+            barColor = a.getColor(R.styleable.MessageView_barColor, Color.BLUE);
+            textSize = a.getDimension(R.styleable.MessageView_textSize, 24);
+        } finally {
+            a.recycle();
         }
 
-        a.recycle();
-
-        // Set up a default TextPaint object
-        mTextPaint = new TextPaint();
-        mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
-        mTextPaint.setTextAlign(Paint.Align.LEFT);
-
-        // Update TextPaint and text measurements from attributes
-        invalidateTextPaintAndMeasurements();
+        init();
     }
 
-    private void invalidateTextPaintAndMeasurements() {
-        mTextPaint.setTextSize(mExampleDimension);
-        mTextPaint.setColor(mExampleColor);
-        mTextWidth = mTextPaint.measureText(mExampleString);
+    Paint textPaint;
+    Paint barPaint;
+//    Paint redPaint;
+//    Paint yellowPaint;
 
-        Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
-        mTextHeight = fontMetrics.bottom;
+    private void init() {
+        textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setColor(Color.BLACK);
+        textPaint.setTextSize(textSize);
+
+        barPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        barPaint.setStyle(Paint.Style.FILL);
+        barPaint.setColor(barColor);
+
+//        redPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+//        redPaint.setStyle(Paint.Style.FILL);
+//        redPaint.setColor(Color.RED);
+//
+//        yellowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+//        yellowPaint.setStyle(Paint.Style.FILL);
+//        yellowPaint.setColor(Color.YELLOW);
+    }
+
+    int barLeft = 0;
+    int barTop = 0;
+    int barRight = 0;
+    int barBottom = 0;
+
+    int textX = 0;
+    int textY = 0;
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        barLeft = getPaddingLeft();
+        barTop = getPaddingTop();
+        barRight = w - getPaddingRight();
+        barBottom = h - getPaddingBottom();
+
+        textX = w/2 - textBounds.centerX();
+        textY = h-getPaddingBottom()-textBounds.bottom;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        // TODO: consider storing these as member variables to reduce
-        // allocations per draw cycle.
-        int paddingLeft = getPaddingLeft();
-        int paddingTop = getPaddingTop();
-        int paddingRight = getPaddingRight();
-        int paddingBottom = getPaddingBottom();
+        int offset = (int)((barRight-barLeft)*(1-message.percentLeftToLive()));
 
-        int contentWidth = getWidth() - paddingLeft - paddingRight;
-        int contentHeight = getHeight() - paddingTop - paddingBottom;
+        canvas.drawRect(barLeft+offset, barTop, barRight, barBottom, barPaint);
+        canvas.drawText(message.getMessage(), textX,textY, textPaint);
+//        canvas.drawRect(0,0,20,20,redPaint);
+//        canvas.drawRect(100,50,110,60,yellowPaint);
 
-        // Draw the text.
-        canvas.drawText(mExampleString,
-                paddingLeft + (contentWidth - mTextWidth) / 2,
-                paddingTop + (contentHeight + mTextHeight) / 2,
-                mTextPaint);
-
-        // Draw the example drawable on top of the text.
-        if (mExampleDrawable != null) {
-            mExampleDrawable.setBounds(paddingLeft, paddingTop,
-                    paddingLeft + contentWidth, paddingTop + contentHeight);
-            mExampleDrawable.draw(canvas);
-        }
-    }
-
-    /**
-     * Gets the example string attribute value.
-     *
-     * @return The example string attribute value.
-     */
-    public String getExampleString() {
-        return mExampleString;
-    }
-
-    /**
-     * Sets the view's example string attribute value. In the example view, this string
-     * is the text to draw.
-     *
-     * @param exampleString The example string attribute value to use.
-     */
-    public void setExampleString(String exampleString) {
-        mExampleString = exampleString;
-        invalidateTextPaintAndMeasurements();
-    }
-
-    /**
-     * Gets the example color attribute value.
-     *
-     * @return The example color attribute value.
-     */
-    public int getExampleColor() {
-        return mExampleColor;
-    }
-
-    /**
-     * Sets the view's example color attribute value. In the example view, this color
-     * is the font color.
-     *
-     * @param exampleColor The example color attribute value to use.
-     */
-    public void setExampleColor(int exampleColor) {
-        mExampleColor = exampleColor;
-        invalidateTextPaintAndMeasurements();
-    }
-
-    /**
-     * Gets the example dimension attribute value.
-     *
-     * @return The example dimension attribute value.
-     */
-    public float getExampleDimension() {
-        return mExampleDimension;
-    }
-
-    /**
-     * Sets the view's example dimension attribute value. In the example view, this dimension
-     * is the font size.
-     *
-     * @param exampleDimension The example dimension attribute value to use.
-     */
-    public void setExampleDimension(float exampleDimension) {
-        mExampleDimension = exampleDimension;
-        invalidateTextPaintAndMeasurements();
-    }
-
-    /**
-     * Gets the example drawable attribute value.
-     *
-     * @return The example drawable attribute value.
-     */
-    public Drawable getExampleDrawable() {
-        return mExampleDrawable;
-    }
-
-    /**
-     * Sets the view's example drawable attribute value. In the example view, this drawable is
-     * drawn above the text.
-     *
-     * @param exampleDrawable The example drawable attribute value to use.
-     */
-    public void setExampleDrawable(Drawable exampleDrawable) {
-        mExampleDrawable = exampleDrawable;
     }
 }

@@ -6,7 +6,7 @@ package com.example.kbaldor.listviewtest;
 public class Message {
     private String message;
     private long bornTime_ms;
-    private long timeToLive_ms;
+    public long timeToLive_ms;
 
     public String getMessage() {return message;}
 

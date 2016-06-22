@@ -1,18 +1,18 @@
 package com.example.kbaldor.listviewtest;
 
-import android.database.DataSetObserver;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,30 +24,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ListView listView = (ListView) findViewById(R.id.list_view);
+        final ListView listView = (ListView) findViewById(R.id.list_view);
 
-        adapter = new ArrayAdapter<Message>(this,R.layout.simple_text_view);
+//        adapter = new ArrayAdapter<Message>(this,R.layout.simple_text_view);
 
-//        ArrayAdapter<Message> adapter = new ArrayAdapter<Message>(this,R.layout.simple_text_view) {
-//
-//            @Override
-//            public View getView(final int position, View convertView, ViewGroup parent) {
-////                TextView view = new TextView(getContext());
-//                Button view = new Button(getContext());
-//                view.setText(getItem(position).getMessage());
-////                MessageView view = new MessageView(getContext());
-////                view.setExampleString(getItem(position).getMessage());
-//                view.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        Log.d("ListViewTest","Item number "+position+" got clicked!");
-//                    }
-//                });
-//
-//                return view;
-//            }
-//
-//        };
+        adapter = new ArrayAdapter<Message>(this,R.layout.simple_text_view) {
+
+            @Override
+            public View getView(final int position, View convertView, ViewGroup parent) {
+
+                MessageView view = (MessageView)getLayoutInflater().inflate(R.layout.message_view, parent,false);
+
+                view.setMessage(getItem(position));
+                return view;
+            }
+
+        };
 
         adapter.add(new Message("Message 1",5000));
         adapter.add(new Message("Message 2",10000));
@@ -63,6 +55,22 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("ListViewTest","listViewClickListener called with position "+position);
             }
         });
+
+//        LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
+//
+//        broadcastManager.registerReceiver(
+//                new BroadcastReceiver() {
+//                    @Override
+//                    public void onReceive(Context context, Intent intent) {
+//                        Log.d("Main","Invalidate");
+//                        listView.invalidate();
+//                        listView.inv
+////                        adapter.notifyDataSetInvalidated();
+////                        listView.refreshDrawableState();;
+//                    }
+//                },
+//                new IntentFilter(TickThread.TICK_ACTION));
+
     }
 
     public void newMessage(View view){
@@ -70,4 +78,22 @@ public class MainActivity extends AppCompatActivity {
         adapter.add(new Message("New Message",5000));
 
     }
+
+//    TickThread thread;
+//
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        thread = new TickThread(LocalBroadcastManager.getInstance(this));
+//        thread.start();
+//    }
+//
+//    @Override
+//    protected void onPause() {
+//        super.onPause();
+//        if(thread != null){
+//            thread.cancel();
+//        }
+//        thread = null;
+//    }
 }
