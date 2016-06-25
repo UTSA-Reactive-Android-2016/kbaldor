@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             Log.d(DEBUG,"clear text is of length "+clearText.getBytes().length);
             Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding","SC");
-            rsaCipher.init(Cipher.ENCRYPT_MODE, myKeyPair.getPrivate());
+            rsaCipher.init(Cipher.ENCRYPT_MODE, myKeyPair.getPublic());
             byte[] bytes = rsaCipher.doFinal(clearText.getBytes());
             Log.d(DEBUG,"cipher bytes is of length "+bytes.length);
             Log.d(DEBUG,"");
@@ -118,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
     private String decryptFromBase64(String cipherText){
         try {
             Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding","SC");
-            rsaCipher.init(Cipher.DECRYPT_MODE, myKeyPair.getPublic());
+            rsaCipher.init(Cipher.DECRYPT_MODE, myKeyPair.getPrivate());
             byte[] bytes = Base64.decode(cipherText,Base64.DEFAULT);
             bytes = rsaCipher.doFinal(bytes);
             return new String(bytes,"UTF-8");
