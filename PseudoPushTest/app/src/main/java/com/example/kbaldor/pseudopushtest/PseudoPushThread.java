@@ -16,6 +16,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import javax.net.ssl.HttpsURLConnection;
+
 public class PseudoPushThread extends Thread {
     LocalBroadcastManager broadcastManager;
     String strURL;
@@ -37,10 +39,10 @@ public class PseudoPushThread extends Thread {
             InputStream is = null;
             try {
                 URL url = new URL(strURL);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
                 conn.setReadTimeout(60000); // one minute
                 conn.setConnectTimeout(5000); // five seconds
-                conn.setRequestProperty("Accept","application/json");
+                //conn.setRequestProperty("Accept","application/json");
                 conn.connect();
                 int response = conn.getResponseCode();
                 Log.d(DEBUG_TAG,"Got response: "+response);

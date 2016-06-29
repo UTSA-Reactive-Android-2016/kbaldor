@@ -16,6 +16,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -27,13 +28,22 @@ import java.security.spec.RSAKeyGenParameterSpec;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class MainActivity extends AppCompatActivity {
 
     private static String DEBUG = "CryptoTestMain";
 
     KeyPair myKeyPair;
+
+    SecretKey myAESKey;
+//    byte[] ivBytes = new byte[128];
+//    IvParameterSpec ivSpec;
+//    Key myAESEncriptionKey;
 
     static {
         Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(),1);
@@ -48,7 +58,15 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             SecureRandom random = new SecureRandom();
-            RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(1024, RSAKeyGenParameterSpec.F4);
+//            random.nextBytes(ivBytes);
+//            IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
+
+            KeyGenerator aesGenerator = KeyGenerator.getInstance("AES","SC");
+            aesGenerator.init(256,random);
+            myAESKey = aesGenerator.generateKey();
+            //myAESEncriptionKey = new SecretKeySpec(myAESKey.getEncoded(), "AES");
+
+            RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4);
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA","SC");
             generator.initialize(spec,random);
 
@@ -58,10 +76,11 @@ public class MainActivity extends AppCompatActivity {
 
             StringWriter writer = new StringWriter();
             PemWriter pemWriter = new PemWriter(writer);
-            pemWriter.writeObject(new PemObject("PUBLIC KEY",myKeyPair.getPublic().getEncoded()));
+            pemWriter.writeObject(new PemObject("PUBLIC KEY",myAESKey.getEncoded()));
             pemWriter.flush();
             pemWriter.close();
             ((TextView)findViewById(R.id.public_key_field)).setText(writer.toString());
+            ((TextView)findViewById(R.id.public_key_field)).setText(Base64.encodeToString(myAESKey.getEncoded(),Base64.DEFAULT));
 
 
 //            writer = new StringWriter();
@@ -92,9 +111,13 @@ public class MainActivity extends AppCompatActivity {
     private String encryptToBase64(String clearText){
         try {
             Log.d(DEBUG,"clear text is of length "+clearText.getBytes().length);
-            Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding","SC");
-            rsaCipher.init(Cipher.ENCRYPT_MODE, myKeyPair.getPublic());
-            byte[] bytes = rsaCipher.doFinal(clearText.getBytes());
+//            Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding","SC");
+//            rsaCipher.init(Cipher.ENCRYPT_MODE, myKeyPair.getPublic());
+//            byte[] bytes = rsaCipher.doFinal(clearText.getBytes());
+
+            Cipher aesCipher = Cipher.getInstance("AES","SC");
+            aesCipher.init(Cipher.ENCRYPT_MODE,myAESKey);
+            byte[] bytes = aesCipher.doFinal(clearText.getBytes());
             Log.d(DEBUG,"cipher bytes is of length "+bytes.length);
             Log.d(DEBUG,"");
 
@@ -117,10 +140,16 @@ public class MainActivity extends AppCompatActivity {
 
     private String decryptFromBase64(String cipherText){
         try {
-            Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding","SC");
-            rsaCipher.init(Cipher.DECRYPT_MODE, myKeyPair.getPrivate());
             byte[] bytes = Base64.decode(cipherText,Base64.DEFAULT);
-            bytes = rsaCipher.doFinal(bytes);
+//            Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding","SC");
+//            rsaCipher.init(Cipher.DECRYPT_MODE, myKeyPair.getPrivate());
+
+            Cipher aesCipher = Cipher.getInstance("AES","SC");
+            aesCipher.init(Cipher.DECRYPT_MODE,myAESKey);
+
+//            bytes = rsaCipher.doFinal(bytes);
+            bytes = aesCipher.doFinal(bytes);
+
             return new String(bytes,"UTF-8");
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();

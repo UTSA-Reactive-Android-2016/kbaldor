@@ -56,7 +56,8 @@ public class MainActivity extends AppCompatActivity {
             thread.cancel();
         }
         EditText editText = (EditText)findViewById(R.id.edit_server);
-        String server = String.format("http://%s:3000/counter",editText.getText());
+        String server = String.format("https://%s:8443/counter",editText.getText());
+//        String server = String.format("http://%s:3000/counter",editText.getText());
         thread = new PseudoPushThread(LocalBroadcastManager.getInstance(this),server);
         SharedPreferences.Editor editor = getPreferences(MODE_PRIVATE).edit();
         editor.putString("SERVER_IP",editText.getText().toString());
