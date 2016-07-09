@@ -91,6 +91,8 @@ public class ServerAPI {
         String url = makeURL("get-key");
         Log.d(LOG,"getting key with "+url);
 
+        serverKey = null;
+
         if(serverKey==null){
 
             StringRequest keyRequest = new StringRequest(Request.Method.GET, url,
@@ -129,11 +131,14 @@ public class ServerAPI {
                     @Override
                     public void onResponse(String challenge) {
                         Log.d(LOG, "Got challenge: " + challenge);
+                        Log.d(LOG, "Got challenge of length: " + challenge.length());
 
-                        byte[] decrypted = crypto.decrypt(Base64.decode(challenge, Base64.DEFAULT));
-                        Log.d(LOG,"Got decoded challenge "+Base64.encodeToString(decrypted,Base64.DEFAULT));
+                        byte[] decrypted = crypto.decrypt(Base64.decode(challenge, Base64.NO_WRAP));
+                        Log.d(LOG, "Got decrypted challenge of length: " + decrypted.length);
 
-                        String response = Base64.encodeToString(crypto.encrypt(decrypted,serverKey),Base64.DEFAULT);
+                        Log.d(LOG,"Got decoded challenge "+Base64.encodeToString(decrypted,Base64.NO_WRAP));
+
+                        String response = Base64.encodeToString(crypto.encrypt(decrypted,serverKey),Base64.NO_WRAP);
 
                         String url = makeURL("login");
                         JSONObject json = new JSONObject();
@@ -151,7 +156,7 @@ public class ServerAPI {
                                     @Override
                                     public void onResponse(JSONObject response) {
                                         try {
-                                            Log.d(LOG,"Response: " + response.get("username").toString());
+                                            Log.d(LOG,"Response: " + response.get("status").toString());
                                         } catch (JSONException e) {
                                             e.printStackTrace();
                                         }

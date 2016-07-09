@@ -20,6 +20,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAKeyGenParameterSpec;
+import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -38,13 +39,14 @@ public class Crypto {
 
     public Crypto(SharedPreferences preferences){
         String RSAPrivateKey = preferences.getString("RSAPrivateKey","");
-        String RSAPublicKey  = preferences.getString("RSAPrivateKey","");
+        String RSAPublicKey  = preferences.getString("RSAPublicKey","");
+
+        Log.d("Crypto","Public key string: "+RSAPublicKey);
+        Log.d("Crypto","Decoded: "+getPublicKeyFromString(RSAPublicKey));
 
 
         if(RSAPrivateKey.isEmpty() || !readKeyPair(RSAPrivateKey,RSAPublicKey)) {
-            geneateNewRSAKeyPair();
-        } else {
-
+            myRSAKeyPair =geneateNewRSAKeyPair();
         }
     }
 
@@ -65,8 +67,21 @@ public class Crypto {
     public PublicKey getPublicKeyFromString(String keyString){
         try {
             KeyFactory constructor_claves = KeyFactory.getInstance("RSA");
-            KeySpec clave_raw = new PKCS8EncodedKeySpec(Base64.decode(keyString, Base64.NO_WRAP));
+            KeySpec clave_raw = new X509EncodedKeySpec(Base64.decode(keyString, Base64.NO_WRAP));
             return constructor_claves.generatePublic(clave_raw);
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public PrivateKey getPrivateKeyFromString(String keyString){
+        try {
+            KeyFactory constructor_claves = KeyFactory.getInstance("RSA");
+            KeySpec clave_raw = new PKCS8EncodedKeySpec(Base64.decode(keyString, Base64.NO_WRAP));
+            return constructor_claves.generatePrivate(clave_raw);
         } catch (InvalidKeySpecException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
@@ -78,25 +93,20 @@ public class Crypto {
     private boolean readKeyPair(String rsaPrivateKey, String rsaPublicKey) {
         PrivateKey privateKey = null;
         PublicKey publicKey = null;
-        try {
-            KeyFactory  constructor_claves = KeyFactory.getInstance("RSA");
-            KeySpec clave_raw = new PKCS8EncodedKeySpec(Base64.decode(rsaPrivateKey,Base64.DEFAULT));
-            privateKey = constructor_claves.generatePrivate(clave_raw);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-        }
 
-        try {
-            KeyFactory  constructor_claves = KeyFactory.getInstance("RSA");
-            KeySpec clave_raw = new PKCS8EncodedKeySpec(Base64.decode(rsaPublicKey,Base64.DEFAULT));
-            publicKey = constructor_claves.generatePublic(clave_raw);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-        }
+        publicKey = getPublicKeyFromString(rsaPublicKey);
+        privateKey = getPrivateKeyFromString(rsaPrivateKey);
+
+//        try {
+//            KeyFactory  constructor_claves = KeyFactory.getInstance("RSA");
+//            KeySpec clave_raw = new X509EncodedKeySpec(Base64.decode(rsaPrivateKey,Base64.DEFAULT));
+//            privateKey = constructor_claves.generatePrivate(clave_raw);
+//        } catch (NoSuchAlgorithmException e) {
+//            e.printStackTrace();
+//        } catch (InvalidKeySpecException e) {
+//            e.printStackTrace();
+//        }
+
 
         if((privateKey != null) && (publicKey != null)){
             myRSAKeyPair = new KeyPair(publicKey,privateKey);
@@ -105,7 +115,7 @@ public class Crypto {
         return false;
     }
 
-    private void geneateNewRSAKeyPair(){
+    private KeyPair geneateNewRSAKeyPair(){
         SecureRandom random = new SecureRandom();
         RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4);
         KeyPairGenerator generator = null;
@@ -113,7 +123,7 @@ public class Crypto {
             generator = KeyPairGenerator.getInstance("RSA","SC");
             generator.initialize(spec,random);
 
-            myRSAKeyPair = generator.generateKeyPair();
+            return generator.generateKeyPair();
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (NoSuchProviderException e) {
@@ -121,7 +131,7 @@ public class Crypto {
         } catch (InvalidAlgorithmParameterException e) {
             e.printStackTrace();
         }
-
+        return null;
     }
 
     public byte[] decrypt(byte[] cipherText){
