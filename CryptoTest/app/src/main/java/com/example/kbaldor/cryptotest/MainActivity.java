@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import org.spongycastle.util.Arrays;
 import org.spongycastle.util.io.pem.PemObject;
 import org.spongycastle.util.io.pem.PemWriter;
 
@@ -115,13 +116,17 @@ public class MainActivity extends AppCompatActivity {
 //            rsaCipher.init(Cipher.ENCRYPT_MODE, myKeyPair.getPublic());
 //            byte[] bytes = rsaCipher.doFinal(clearText.getBytes());
 
-            Cipher aesCipher = Cipher.getInstance("AES","SC");
+            Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding","SC");
             aesCipher.init(Cipher.ENCRYPT_MODE,myAESKey);
             byte[] bytes = aesCipher.doFinal(clearText.getBytes());
             Log.d(DEBUG,"cipher bytes is of length "+bytes.length);
             Log.d(DEBUG,"");
 
-            return Base64.encodeToString(bytes,Base64.DEFAULT);
+            byte[] concatBytes = new byte[bytes.length+16];
+            System.arraycopy(aesCipher.getIV(),0,concatBytes,0,16);
+            System.arraycopy(bytes,0,concatBytes,16,bytes.length);
+
+            return Base64.encodeToString(concatBytes,Base64.DEFAULT);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (NoSuchProviderException e) {
@@ -141,14 +146,16 @@ public class MainActivity extends AppCompatActivity {
     private String decryptFromBase64(String cipherText){
         try {
             byte[] bytes = Base64.decode(cipherText,Base64.DEFAULT);
+            byte[] iv = Arrays.copyOfRange(bytes, 0, 16);
+            byte[] decode = Arrays.copyOfRange(bytes, 16, bytes.length);
 //            Cipher rsaCipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA1AndMGF1Padding","SC");
 //            rsaCipher.init(Cipher.DECRYPT_MODE, myKeyPair.getPrivate());
 
-            Cipher aesCipher = Cipher.getInstance("AES","SC");
-            aesCipher.init(Cipher.DECRYPT_MODE,myAESKey);
+            Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding","SC");
+            aesCipher.init(Cipher.DECRYPT_MODE,myAESKey,new IvParameterSpec(iv));
 
 //            bytes = rsaCipher.doFinal(bytes);
-            bytes = aesCipher.doFinal(bytes);
+            bytes = aesCipher.doFinal(decode);
 
             return new String(bytes,"UTF-8");
         } catch (NoSuchAlgorithmException e) {
@@ -167,6 +174,8 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         } catch (RuntimeException e) {
             Log.d(DEBUG,"Ouch",e);
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
         }
         return "";
     }
