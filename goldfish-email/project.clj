@@ -17,4 +17,5 @@
                  [clj-crypto "1.0.2"]
                  [crypto-random "1.2.0"]
                  [lock-key "1.4.1"]
-                 [org.clojure/data.json "0.2.6"]])
+                 [org.clojure/data.json "0.2.6"]
+                 [com.novemberain/pantomime "2.8.0"]])

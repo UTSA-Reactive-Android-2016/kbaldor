@@ -4,33 +4,38 @@
             [compojure.core :refer [defroutes ANY GET PUT]]
             [goldfish-email.users :as users]
             [goldfish-email.crypto :as my-crypto]
+            [goldfish-email.network :as network]
+            [goldfish-email.image-processing :as im-proc]
             [clojure.java.io :as io]
             [clojure.data.json :as json]
             [crypto.random]
             [ring.util.response :as response]
-            [ring.adapter.jetty :refer :all]
-            [clj-crypto.core :as crypto])
-  (:import (java.net NetworkInterface)
-           (org.apache.commons.codec.binary Base64))
+            [ring.adapter.jetty :refer :all])
+  (:import (org.apache.commons.codec.binary Base64)
+           [org.apache.commons.io IOUtils])
   (:gen-class))
 
 (defn register-handler
   [ctx]
-  (let [body     (slurp (get-in ctx [:request :body]))
-        data     (json/read-str body)
-        username (get-in data ["username"])
-        image    (get-in data ["image"])
-        key64    (get-in data ["public-key"])
-        key      (my-crypto/decode-base64-rsa-public-key key64)]
-    (println "register-handler called")
-    (println key)
-    (users/register username image key64 key)
-    {:username username}))
+  (let [body        (slurp (get-in ctx [:request :body]))
+        data        (json/read-str body)
+        username    (get-in data ["username"])
+        image       (get-in data ["image"])
+        image-bytes (Base64/decodeBase64 image)
+        key64       (get-in data ["public-key"])
+        key         (my-crypto/decode-base64-rsa-public-key key64)]
+    (if (im-proc/legal-png? image-bytes)
+      (do
+        (users/register username image key64 key)
+        (println (format "user %s registered" username))
+        {:status "ok" :reason "ok"})
+      {:status "fail" :reason (im-proc/png-issues image-bytes)}
+      )))
 
 (defn get-image-response
   [id]
   (let [record (get-in @users/user-info-map [id]),
-        image (crypto/decode-base64 (:image record))]
+        image (Base64/decodeBase64 (:image record))]
     (println "record " record)
     (println "base64 image " (:image record))
     (println "size of image " (count image))
@@ -38,9 +43,21 @@
             (response/content-type "image/png")
             (response/header "Content-Length" (count image)))))
 
+(defn get-present-image
+  [username]
+  (let [status (if (contains? @users/current-users username) "present" "not_present")
+        filename (format "%s.png" status)
+        image (IOUtils/toByteArray (io/input-stream (io/resource filename)))]
+    (-> (response/response (new java.io.ByteArrayInputStream image))
+        (response/content-type "image/png")
+        (response/header "Content-Length" (count image)))))
+
+
 (defn get-user-row
-  [id]
-  (format "<tr><td>%s</td><td><img src=\"/images/%s.png\"/></td><td>%s</td></tr>" id id (get-in @users/user-info-map [id :key64])))
+  [username]
+  (format "<tr><td><img src=\"/present-images/%s.png\"/<td>%s</td><td><img src=\"/images/%s.png\"/></td><td>%s</td></tr>"
+          username username username
+          (get-in @users/user-info-map [username :key64])))
 
 (defn get-users-table
   [ctx]
@@ -56,57 +73,68 @@
 (defn get-challenge
   [username]
   (let [bytes (crypto.random/bytes 64)
-        base64-bytes (crypto/encode-base64-as-str bytes)
-        user (@users/user-info-map username)]
+        user (@users/user-info-map username)
+        user-key64 (:key64 user)
+        user-key (:key user)
+        none (println "encoding for user " username)
+        none (println "encoding with key " user-key64)
+        encrypted (my-crypto/encrypt user-key bytes)]
     (if (nil? user)
-      "user-not-found"
+      "user-not-registered"
       (do
-        (println base64-bytes)
-        (println "setting challenge for " username)
-        (users/set-challenge username base64-bytes)
-        (crypto/encode-base64-as-str (crypto/encrypt (:key user) bytes))))))
+        (users/set-challenge username bytes)
+        (Base64/encodeBase64String encrypted)))))
 
 (defn login-handler
   [ctx]
-  (let [body     (slurp (get-in ctx [:request :body]))
-        data     (json/read-str body)
-        username  (get-in data ["username"])
-        response (get-in data ["response"])
+  (let [body             (slurp (get-in ctx [:request :body]))
+        data             (json/read-str body)
+        username         (get-in data ["username"])
+        response         (get-in data ["response"])
         decoded-response (my-crypto/decrypt-base64-string response)
-        last-challenge (@users/user-challenge-map username)]
-    (println "username: " username)
-    (println "response       " response)
-    (println "response length " (.length response))
-    (println "last challenge " last-challenge)
-    (println "decoded response " decoded-response)
-    (println "match: " (= last-challenge decoded-response))
-    (if (= last-challenge decoded-response)
-      {:status "succcess"}
-      {:status "fail"})
-    ))
+        last-challenge   (users/get-last-challenge username)]
+    (if (= (seq last-challenge) (seq decoded-response))
+      (do
+        (users/sign-in username)
+        {:status "succcess"})
+      {:status "fail"})))
 
-(defn get-public-key
+(defn logout-handler
   [ctx]
-  (do (println "sending key " my-crypto/public-key-string)
-      my-crypto/public-key-string))
+  (let [body             (slurp (get-in ctx [:request :body]))
+        data             (json/read-str body)
+        username         (get-in data ["username"])
+        response         (get-in data ["response"])
+        decoded-response (my-crypto/decrypt-base64-string response)
+        last-challenge   (users/get-last-challenge username)]
+    (if (= (seq last-challenge) (seq decoded-response))
+      (do
+        (users/sign-out username)
+        {:status "succcess"})
+      {:status "fail"})))
 
 (defroutes app
            (GET "/" [] get-users-table)
            (ANY "/api-version" [] "0.1.0")
-           (GET "/get-challenge/:id" [id] (get-challenge id))
+           (GET "/get-challenge/:username" [username] (get-challenge username))
            (PUT "/login" [] (resource :available-media-types ["application/json"]
                                       :allowed-methods [:put]
                                       :handle-created login-handler
+                                      ))
+           (PUT "/logout" [] (resource :available-media-types ["application/json"]
+                                      :allowed-methods [:put]
+                                      :handle-created logout-handler
                                       ))
            (ANY "/register" []
              (resource :available-media-types ["application/json"]
                        :allowed-methods [:put]
                        :handle-created register-handler
                        ))
-           (GET "/get-contact-info/:id" [id] (get-contact-info id))
+           (GET "/get-contact-info/:username" [username] (get-contact-info username))
            (GET "/get-key" [] (resource :available-media-types ["text/html"]
-                                :handle-ok get-public-key) )
-           (GET "/images/:id.png" [id] (get-image-response id))
+                                        :handle-ok my-crypto/encoded-public-key-string))
+           (GET "/images/:username.png" [username] (get-image-response username))
+           (GET "/present-images/:username.png" [username] (get-present-image username))
            )
 
 (def handler
@@ -114,17 +142,7 @@
       wrap-params))
 
 
-;TODO: this could be modified to provide a list of candidate IP addresses rather than just picking the first
-(def ip
-  (let [ifc (NetworkInterface/getNetworkInterfaces)
-        ifsq (enumeration-seq ifc)
-        ifmp (map #(bean %) ifsq)
-        ipsq (filter #(false? (% :loopback)) ifmp)
-        ipa (map :interfaceAddresses ipsq)
-        ipaf (nth ipa 0)
-        ipafs (.split (str ipaf) " " )
-        ips (first (nnext ipafs))]
-    (str (second (.split ips "/")))))
+
 
 (defn parse-number
   "Reads a number from a string. Returns nil if not a number."

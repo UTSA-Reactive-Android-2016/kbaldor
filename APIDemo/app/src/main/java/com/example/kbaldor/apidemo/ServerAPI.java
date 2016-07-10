@@ -70,7 +70,8 @@ public class ServerAPI {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            Log.d(LOG,"Response: " + response.get("username").toString());
+                            Log.d(LOG,"Response: status: " + response.get("status").toString() +
+                                               " reason: " + response.get("reason").toString());
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -180,4 +181,98 @@ public class ServerAPI {
         });
         requestQueue.add(keyRequest);
     }
+
+    public void logout(final String username,final Crypto crypto) {
+        String url = makeURL("get-key");
+        Log.d(LOG,"getting key with "+url);
+
+        if(serverKey==null){
+
+            StringRequest keyRequest = new StringRequest(Request.Method.GET, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String key) {
+                            Log.d(LOG, "Got key: " + key);
+
+                            serverKey = crypto.getPublicKeyFromString(key);
+
+                            Log.d(LOG, "Decoded key to "+serverKey);
+
+                            if(serverKey!=null){
+                                realLogout(username,crypto);
+                            }
+
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d(LOG,"Couldn't get key",error);
+                }
+            });
+            requestQueue.add(keyRequest);
+        } else {
+            realLogout(username,crypto);
+        }
+
+    }
+
+
+    private void realLogout(final String username,final Crypto crypto){
+        String url = makeURL("get-challenge",username);
+        StringRequest keyRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String challenge) {
+                        Log.d(LOG, "Got challenge: " + challenge);
+                        Log.d(LOG, "Got challenge of length: " + challenge.length());
+
+                        byte[] decrypted = crypto.decrypt(Base64.decode(challenge, Base64.NO_WRAP));
+                        Log.d(LOG, "Got decrypted challenge of length: " + decrypted.length);
+
+                        Log.d(LOG,"Got decoded challenge "+Base64.encodeToString(decrypted,Base64.NO_WRAP));
+
+                        String response = Base64.encodeToString(crypto.encrypt(decrypted,serverKey),Base64.NO_WRAP);
+
+                        String url = makeURL("logout");
+                        JSONObject json = new JSONObject();
+                        try {
+                            json.put("username",username);
+                            json.put("response",response);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        Log.d(LOG,"logging in with "+url);
+
+                        JsonObjectRequest jsObjRequest = new JsonObjectRequest(Request.Method.PUT, url, json,
+                                new Response.Listener<JSONObject>() {
+
+                                    @Override
+                                    public void onResponse(JSONObject response) {
+                                        try {
+                                            Log.d(LOG,"Response: " + response.get("status").toString());
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }, new Response.ErrorListener() {
+
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                // TODO Auto-generated method stub
+                                Log.d(LOG,"That didn't work :(",error);
+                            }
+                        });
+                        requestQueue.add(jsObjRequest);
+
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(LOG,"Couldn't get challenge",error);
+            }
+        });
+        requestQueue.add(keyRequest);
+    }
+
+
 }

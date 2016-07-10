@@ -62,4 +62,11 @@ public class MainActivity extends AppCompatActivity {
         serverAPI.login("kbaldor",myCrypto);
     }
 
+    public void doLogout(View view) {
+        String serverName = ((EditText)findViewById(R.id.servername)).getText().toString();
+        serverAPI.setServerName(serverName);
+
+        serverAPI.logout("kbaldor",myCrypto);
+    }
+
 }

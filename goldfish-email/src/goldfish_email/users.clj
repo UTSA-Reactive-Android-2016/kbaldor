@@ -17,6 +17,13 @@
   [username challenge]
   (swap! user-challenge-map assoc username challenge))
 
+(defn get-last-challenge
+  [username]
+  (let [last-challenge (@user-challenge-map username)]
+    (swap! user-challenge-map dissoc username)
+    last-challenge
+    ))
+
 (defn set-friends
   [id friends-list]
   (swap! friends-map assoc id friends-list))
