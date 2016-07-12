@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     SecretKey myAESKey;
 //    byte[] ivBytes = new byte[128];
 //    IvParameterSpec ivSpec;
-//    Key myAESEncriptionKey;
+//    Key myAESEncryptionKey;
 
     static {
         Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(),1);
@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
             KeyGenerator aesGenerator = KeyGenerator.getInstance("AES","SC");
             aesGenerator.init(256,random);
             myAESKey = aesGenerator.generateKey();
-            //myAESEncriptionKey = new SecretKeySpec(myAESKey.getEncoded(), "AES");
+            //myAESEncryptionKey = new SecretKeySpec(myAESKey.getEncoded(), "AES");
 
             RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4);
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA","SC");

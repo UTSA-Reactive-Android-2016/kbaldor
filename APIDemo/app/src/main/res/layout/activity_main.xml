@@ -25,16 +25,44 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="14pt"
         android:text="Register"
         android:onClick="doRegister"/>
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="14pt"
         android:text="Login"
         android:onClick="doLogin"/>
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="14pt"
+        android:text="Register Contacts"
+        android:onClick="doRegisterContacts"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14pt"
+        android:text="Start Push Listener"
+        android:onClick="doStartPushListener"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14pt"
+        android:text="Get Alice's Contact Info"
+        android:onClick="doGetAliceInfo"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14pt"
+        android:text="Send Message To Alice"
+        android:onClick="doSendMessageToAlice"/>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14pt"
         android:text="Logout"
         android:onClick="doLogout"/>
+
 </LinearLayout>

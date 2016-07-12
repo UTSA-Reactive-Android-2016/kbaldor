@@ -5,12 +5,15 @@
             [goldfish-email.users :as users]
             [goldfish-email.crypto :as my-crypto]
             [goldfish-email.network :as network]
+            [goldfish-email.html :as html]
+            [goldfish-email.status :as status]
             [goldfish-email.image-processing :as im-proc]
             [clojure.java.io :as io]
             [clojure.data.json :as json]
             [crypto.random]
             [ring.util.response :as response]
-            [ring.adapter.jetty :refer :all])
+            [ring.adapter.jetty :refer :all]
+            [goldfish-email.notifications :as notifications])
   (:import (org.apache.commons.codec.binary Base64)
            [org.apache.commons.io IOUtils])
   (:gen-class))
@@ -28,62 +31,39 @@
       (do
         (users/register username image key64 key)
         (println (format "user %s registered" username))
-        {:status "ok" :reason "ok"})
-      {:status "fail" :reason (im-proc/png-issues image-bytes)}
+        status/success)
+      (status/fail (im-proc/png-issues image-bytes))
       )))
 
-(defn get-image-response
-  [id]
-  (let [record (get-in @users/user-info-map [id]),
-        image (Base64/decodeBase64 (:image record))]
-    (println "record " record)
-    (println "base64 image " (:image record))
-    (println "size of image " (count image))
-    (-> (response/response (new java.io.ByteArrayInputStream image))
-            (response/content-type "image/png")
-            (response/header "Content-Length" (count image)))))
-
-(defn get-present-image
-  [username]
-  (let [status (if (contains? @users/current-users username) "present" "not_present")
-        filename (format "%s.png" status)
-        image (IOUtils/toByteArray (io/input-stream (io/resource filename)))]
-    (-> (response/response (new java.io.ByteArrayInputStream image))
-        (response/content-type "image/png")
-        (response/header "Content-Length" (count image)))))
-
-
-(defn get-user-row
-  [username]
-  (format "<tr><td><img src=\"/present-images/%s.png\"/<td>%s</td><td><img src=\"/images/%s.png\"/></td><td>%s</td></tr>"
-          username username username
-          (get-in @users/user-info-map [username :key64])))
-
-(defn get-users-table
+(defn register-friends-handler
   [ctx]
-  (format "<html><table>%s</table></html>" (clojure.string/join (map get-user-row (keys @users/user-info-map)))))
+  (let [body        (slurp (get-in ctx [:request :body]))
+        json        (json/read-str body)
+        username    (get-in json ["username"])
+        friends     (get-in json ["friends"])]
+    (println "body" body)
+    (println username "has friends" friends)
+    (users/set-friends username friends)
+    status/success))
 
 (defn get-contact-info
-  [id]
-  {:username (get-in @users/user-info-map [id :username])
-   :image (get-in @users/user-info-map [id :image])
-   :key (get-in @users/user-info-map [id :key64])
+  [username]
+  (println "getting contact info for" username)
+  {:username (get-in @users/user-info-map [username :username])
+   :image (get-in @users/user-info-map [username :image])
+   :key (get-in @users/user-info-map [username :key64])
    })
 
 (defn get-challenge
   [username]
-  (let [bytes (crypto.random/bytes 64)
-        user (@users/user-info-map username)
-        user-key64 (:key64 user)
-        user-key (:key user)
-        none (println "encoding for user " username)
-        none (println "encoding with key " user-key64)
-        encrypted (my-crypto/encrypt user-key bytes)]
+  (let [user (@users/user-info-map username)]
     (if (nil? user)
       "user-not-registered"
       (do
-        (users/set-challenge username bytes)
-        (Base64/encodeBase64String encrypted)))))
+        (let [bytes (crypto.random/bytes 64)
+              encrypted (my-crypto/encrypt (:key user) bytes)]
+          (users/set-challenge username bytes)
+          (Base64/encodeBase64String encrypted))))))
 
 (defn login-handler
   [ctx]
@@ -95,9 +75,9 @@
         last-challenge   (users/get-last-challenge username)]
     (if (= (seq last-challenge) (seq decoded-response))
       (do
-        (users/sign-in username)
-        {:status "succcess"})
-      {:status "fail"})))
+        (users/log-in username)
+        status/success)
+      (status/fail "failed challenge"))))
 
 (defn logout-handler
   [ctx]
@@ -109,39 +89,80 @@
         last-challenge   (users/get-last-challenge username)]
     (if (= (seq last-challenge) (seq decoded-response))
       (do
-        (users/sign-out username)
-        {:status "succcess"})
-      {:status "fail"})))
+        (users/log-out username)
+        status/success)
+      (status/fail "failed challenge"))))
+
+(defn get-user-image
+  [id]
+  (let [record (get-in @users/user-info-map [id]),
+        image  (Base64/decodeBase64 (:image record))]
+    (-> (response/response (new java.io.ByteArrayInputStream image))
+        (response/content-type "image/png")
+        (response/header "Content-Length" (count image)))))
+
+(defn get-present-image
+  [username]
+  (let [status   (if (contains? @users/current-users username) "present" "not_present")
+        filename (format "%s.png" status)
+        image    (IOUtils/toByteArray (io/input-stream (io/resource filename)))]
+    (-> (response/response (new java.io.ByteArrayInputStream image))
+        (response/content-type "image/png")
+        (response/header "Content-Length" (count image)))))
+
+(defn wait-for-push
+  [username]
+  (notifications/get-notifications username))
+
+(defn send-message-handler
+  [ctx]
+  (let [recipient (get-in ctx [:request :params :recipient])
+        body      (slurp (get-in ctx [:request :body]))
+        json      (json/read-str body)]
+    (dosync
+      (if (not (users/is-logged-in recipient))
+        (status/fail "user-unavailable")
+        ;else
+        (if (contains? users/fake-users recipient)
+          (do
+           (users/handle-fake-email recipient json)
+           status/success)
+          (notifications/deliver-message recipient body))))))
+
+
+(defmacro json-put-resource
+  [handler]
+  (list resource
+        :available-media-types ["application/json"]
+        :allowed-methods [:put]
+        :handle-created handler))
+
+(defmacro json-get-resource
+  [handler]
+  (list resource
+        :available-media-types ["application/json"]
+        :allowed-methods [:get]
+        :handle-ok handler))
 
 (defroutes app
-           (GET "/" [] get-users-table)
-           (ANY "/api-version" [] "0.1.0")
-           (GET "/get-challenge/:username" [username] (get-challenge username))
-           (PUT "/login" [] (resource :available-media-types ["application/json"]
-                                      :allowed-methods [:put]
-                                      :handle-created login-handler
-                                      ))
-           (PUT "/logout" [] (resource :available-media-types ["application/json"]
-                                      :allowed-methods [:put]
-                                      :handle-created logout-handler
-                                      ))
-           (ANY "/register" []
-             (resource :available-media-types ["application/json"]
-                       :allowed-methods [:put]
-                       :handle-created register-handler
-                       ))
-           (GET "/get-contact-info/:username" [username] (get-contact-info username))
-           (GET "/get-key" [] (resource :available-media-types ["text/html"]
-                                        :handle-ok my-crypto/encoded-public-key-string))
-           (GET "/images/:username.png" [username] (get-image-response username))
-           (GET "/present-images/:username.png" [username] (get-present-image username))
+           (GET "/" [] html/get-users-table)
+           (ANY "/api-version" [] "0.2.0")
+           (GET "/get-challenge/:username"      [username]  (get-challenge username))
+           (PUT "/login"                        []          (json-put-resource login-handler))
+           (PUT "/logout"                       []          (json-put-resource logout-handler))
+           (PUT "/register"                     []          (json-put-resource register-handler))
+           (PUT "/register-friends"             []          (json-put-resource register-friends-handler))
+           (PUT "/send-message/:recipient"      []          (json-put-resource send-message-handler))
+           (GET "/get-contact-info/:username"   [username]  (json-get-resource (get-contact-info username)))
+           (GET "/get-key"                      []          my-crypto/encoded-public-key-string)
+           (GET "/wait-for-push/:username"      [username]  (json-get-resource (wait-for-push username)))
+           (GET "/user-images/:username.png"    [username]  (get-user-image username))
+           (GET "/present-images/:username.png" [username]  (get-present-image username))
            )
 
 (def handler
   (-> app
       wrap-params))
-
-
 
 
 (defn parse-number

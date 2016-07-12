@@ -4,6 +4,9 @@ import android.content.SharedPreferences;
 import android.util.Base64;
 import android.util.Log;
 
+import org.spongycastle.util.Arrays;
+
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -25,12 +28,18 @@ import java.security.spec.X509EncodedKeySpec;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Created by kbaldor on 7/7/16.
  */
 public class Crypto {
+    private static String LOG = "Crypto";
+
     static {
         Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(),1);
     }
@@ -46,7 +55,7 @@ public class Crypto {
 
 
         if(RSAPrivateKey.isEmpty() || !readKeyPair(RSAPrivateKey,RSAPublicKey)) {
-            myRSAKeyPair =geneateNewRSAKeyPair();
+            myRSAKeyPair = geneateNewRSAKeyPair();
         }
     }
 
@@ -64,7 +73,7 @@ public class Crypto {
         return Base64.encodeToString(myRSAKeyPair.getPublic().getEncoded(),Base64.DEFAULT);
     }
 
-    public PublicKey getPublicKeyFromString(String keyString){
+    public static PublicKey getPublicKeyFromString(String keyString){
         try {
             KeyFactory constructor_claves = KeyFactory.getInstance("RSA");
             KeySpec clave_raw = new X509EncodedKeySpec(Base64.decode(keyString, Base64.NO_WRAP));
@@ -77,7 +86,7 @@ public class Crypto {
         return null;
     }
 
-    public PrivateKey getPrivateKeyFromString(String keyString){
+    public static PrivateKey getPrivateKeyFromString(String keyString){
         try {
             KeyFactory constructor_claves = KeyFactory.getInstance("RSA");
             KeySpec clave_raw = new PKCS8EncodedKeySpec(Base64.decode(keyString, Base64.NO_WRAP));
@@ -96,17 +105,6 @@ public class Crypto {
 
         publicKey = getPublicKeyFromString(rsaPublicKey);
         privateKey = getPrivateKeyFromString(rsaPrivateKey);
-
-//        try {
-//            KeyFactory  constructor_claves = KeyFactory.getInstance("RSA");
-//            KeySpec clave_raw = new X509EncodedKeySpec(Base64.decode(rsaPrivateKey,Base64.DEFAULT));
-//            privateKey = constructor_claves.generatePrivate(clave_raw);
-//        } catch (NoSuchAlgorithmException e) {
-//            e.printStackTrace();
-//        } catch (InvalidKeySpecException e) {
-//            e.printStackTrace();
-//        }
-
 
         if((privateKey != null) && (publicKey != null)){
             myRSAKeyPair = new KeyPair(publicKey,privateKey);
@@ -134,10 +132,10 @@ public class Crypto {
         return null;
     }
 
-    public byte[] decrypt(byte[] cipherText){
+    static public byte[] decryptRSA(byte[] cipherText, PrivateKey privateKey){
         try {
             Cipher rsaCipher = Cipher.getInstance("RSA","SC");
-            rsaCipher.init(Cipher.DECRYPT_MODE, myRSAKeyPair.getPrivate());
+            rsaCipher.init(Cipher.DECRYPT_MODE, privateKey);
             return rsaCipher.doFinal(cipherText);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -155,7 +153,11 @@ public class Crypto {
         return null;
     }
 
-    public byte[] encrypt(byte[] clearText, PublicKey key){
+    public byte[] decryptRSA(byte[] cipherText){
+        return decryptRSA(cipherText,myRSAKeyPair.getPrivate());
+    }
+
+    static public byte[] encryptRSA(byte[] clearText, PublicKey key){
         try {
             Cipher rsaCipher = Cipher.getInstance("RSA","SC");
             rsaCipher.init(Cipher.ENCRYPT_MODE, key);
@@ -175,4 +177,81 @@ public class Crypto {
         }
         return null;
     }
+
+    public static SecretKey getAESSecretKeyFromBytes(byte[] keyBytes){
+        return new SecretKeySpec(keyBytes, "AES");
+    }
+
+    public static SecretKey createAESKey(){
+        SecureRandom random = new SecureRandom();
+
+        try {
+            KeyGenerator aesGenerator = KeyGenerator.getInstance("AES","SC");
+            aesGenerator.init(128,random);
+            return aesGenerator.generateKey();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static byte[] encryptAES(byte[] clearText, SecretKey aesKey){
+        try {
+            Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SC");
+            aesCipher.init(Cipher.ENCRYPT_MODE, aesKey);
+            byte[] bytes = aesCipher.doFinal(clearText);
+
+            byte[] concatBytes = new byte[bytes.length + 16];
+            System.arraycopy(aesCipher.getIV(), 0, concatBytes, 0, 16);
+            System.arraycopy(bytes, 0, concatBytes, 16, bytes.length);
+
+            return concatBytes;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static byte[] decryptAES(byte[] cipherText, SecretKey aesKey){
+        try {
+            byte[] iv = Arrays.copyOfRange(cipherText, 0, 16);
+            byte[] decode = Arrays.copyOfRange(cipherText, 16, cipherText.length);
+
+            Cipher aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding","SC");
+            aesCipher.init(Cipher.DECRYPT_MODE,aesKey,new IvParameterSpec(iv));
+
+            return aesCipher.doFinal(decode);
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }
