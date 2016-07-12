@@ -50,7 +50,7 @@
     (alter current-users conj username)
     (notifications/add-user username)
     (doseq [listener (friends-inv-map username)]
-      (println "found interested friend" listener)
+      ;(println "found interested friend" listener)
       (notifications/deliver-notification listener {:type     "login"
                                                     :username username}))))
 
@@ -94,6 +94,16 @@
   (swap! fake-user-keys assoc username key-pair)
   (register username image public-key64 public-key))
 
+(let [username "charlie"
+      key-pair (my-crypto/generate-key-pair)
+      public-key (.getPublic key-pair)
+      public-key64 (my-crypto/encode-public-key-string key-pair)
+      image        (Base64/encodeBase64String (IOUtils/toByteArray (io/input-stream (io/resource "charlie.png"))))
+      ]
+  (swap! fake-user-keys assoc username key-pair)
+  (register username image public-key64 public-key))
+
+
 (log-in "alice")
 
 (add-watch current-users nil
@@ -114,25 +124,28 @@
 ;             (println "new friends-inv-map" new)))
 
 
-(defn send-email
+(defn send-fake-email
   [recipient sender subject body ttl]
   (let [aes-key       (my-crypto/generate-secret-key)
-        public-key    (get-in @user-info-map [recipient :key])
-        enc-aes-key   (Base64/encodeBase64String (my-crypto/encrypt public-key (.getEncoded aes-key)))
-        enc-sender    (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes sender "UTF-8"))
-        enc-recipient (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes recipient "UTF-8"))
-        enc-subject   (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes subject "UTF-8"))
-        enc-body      (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes body "UTF-8"))
-        enc-born      (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes (.toString (System/currentTimeMillis)) "UTF-8"))
-        enc-ttl       (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes (.toString ttl) "UTF-8"))
-        message {:aes-key      enc-aes-key
-                 :sender       enc-sender
-                 :recipient    enc-recipient
-                 :subject-line enc-subject
-                 :body         enc-body
-                 :born-on-date enc-born
-                 :time-to-live enc-ttl}]
-    (notifications/deliver-message recipient message)))
+        public-key    (get-in @user-info-map [recipient :key])]
+    (if (not (nil? public-key))
+      (let [
+           enc-aes-key (Base64/encodeBase64String (my-crypto/encrypt public-key (.getEncoded aes-key)))
+           enc-sender (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes sender "UTF-8"))
+           enc-recipient (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes recipient "UTF-8"))
+           enc-subject (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes subject "UTF-8"))
+           enc-body (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes body "UTF-8"))
+           enc-born (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes (.toString (System/currentTimeMillis)) "UTF-8"))
+           enc-ttl (my-crypto/encrypt-aes-to-base64-str aes-key (.getBytes (.toString ttl) "UTF-8"))
+           message {:aes-key      enc-aes-key
+                    :sender       enc-sender
+                    :recipient    enc-recipient
+                    :subject-line enc-subject
+                    :body         enc-body
+                    :born-on-date enc-born
+                    :time-to-live enc-ttl}]
+       (notifications/deliver-message recipient message))
+      (println "unable to send response to" recipient))))
 
 (defn handle-fake-email
   [recipient json]
@@ -154,10 +167,10 @@
     ;(println (format "got body '%s'" (String. (my-crypto/decrypt-aes aes-key body) "UTF-8")))
     (println (format "got body '%s'" body))
     (println (format "from sender '%s'" sender))
-    (send-email sender recipient
-                "Re: your message"
-                (format "What exactly do you mean by '%s'" body)
-                15000)
+    (send-fake-email sender recipient
+                     "Re: your message"
+                     (format "What exactly do you mean by '%s'" body)
+                     15000)
     status/success))
 
 (future
