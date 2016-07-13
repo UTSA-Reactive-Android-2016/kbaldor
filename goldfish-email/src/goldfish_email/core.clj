@@ -18,6 +18,11 @@
            [org.apache.commons.io IOUtils])
   (:gen-class))
 
+(defn legal-username?
+  [username]
+  (re-matches #"^[a-zA-Z][a-zA-Z0-9\-]*$" username)
+  )
+
 (defn register-handler
   [ctx]
   (let [body        (slurp (get-in ctx [:request :body]))
@@ -27,13 +32,13 @@
         image-bytes (Base64/decodeBase64 image)
         key64       (get-in data ["public-key"])
         key         (my-crypto/decode-base64-rsa-public-key key64)]
-    (if (im-proc/legal-png? image-bytes)
-      (do
-        (users/register username image key64 key)
-        (println (format "user %s registered" username))
-        status/success)
-      (status/fail (im-proc/png-issues image-bytes))
-      )))
+    (if (legal-username? username)
+      (if (im-proc/legal-png? image-bytes)
+        (do
+          (users/register username image key64 key)
+          status/success)
+        (status/fail (im-proc/png-issues image-bytes)))
+      (status/fail "username must begin with a letter and consist only of letters, numbers, and hyphens"))))
 
 (defn register-friends-handler
   [ctx]
@@ -132,6 +137,9 @@
            status/success)
           (notifications/deliver-message recipient body))))))
 
+(defn remove-user
+  [username]
+  (swap! users/user-info-map dissoc username))
 
 (defmacro json-put-resource
   [handler]
@@ -149,7 +157,7 @@
 
 (defroutes app
            (GET "/" [] html/get-users-table)
-           (ANY "/api-version" [] "0.2.0")
+           (ANY "/api-version" [] "0.3.0")
            (GET "/get-challenge/:username"      [username]  (get-challenge username))
            (PUT "/login"                        []          (json-put-resource login-handler))
            (PUT "/logout"                       []          (json-put-resource logout-handler))
@@ -161,6 +169,7 @@
            (GET "/wait-for-push/:username"      [username]  (json-get-resource (wait-for-push username)))
            (GET "/user-images/:username.png"    [username]  (get-user-image username))
            (GET "/present-images/:username.png" [username]  (get-present-image username))
+           (GET "/remove-user/:username"        [username]  (remove-user username))
            )
 
 (def handler

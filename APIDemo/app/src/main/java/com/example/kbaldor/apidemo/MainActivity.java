@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.android.volley.VolleyError;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -45,10 +47,56 @@ public class MainActivity extends AppCompatActivity {
         serverAPI = ServerAPI.getInstance(this.getApplicationContext(),
                 myCrypto);
 
-        serverAPI.setServerName(serverName);
+        serverAPI.setServerName(getServerName());
 
 
         serverAPI.registerListener(new ServerAPI.Listener() {
+            @Override
+            public void onCommandFailed(String commandName, VolleyError volleyError) {
+                Toast.makeText(MainActivity.this,String.format("command %s failed!",commandName),
+                        Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onGoodAPIVersion() {
+                Toast.makeText(MainActivity.this,"API Version Matched!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onBadAPIVersion() {
+                Toast.makeText(MainActivity.this,"API Version Mismatch!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onRegistrationSucceeded() {
+                Toast.makeText(MainActivity.this,"Registered!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onRegistrationFailed(String reason) {
+                Toast.makeText(MainActivity.this,"Not registered!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onLoginSucceeded() {
+                Toast.makeText(MainActivity.this,"Logged in!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onLoginFailed(String reason) {
+                Toast.makeText(MainActivity.this,"Not logged in!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onLogoutSucceeded() {
+                Toast.makeText(MainActivity.this,"Logged out!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onLogoutFailed(String reason) {
+                Toast.makeText(MainActivity.this,"Not logged out!", Toast.LENGTH_SHORT).show();
+            }
+
             @Override
             public void onUserInfo(ServerAPI.UserInfo info) {
                 myUserMap.put(info.username,info);
@@ -68,19 +116,40 @@ public class MainActivity extends AppCompatActivity {
             public void onContactLogout(String username) {
                 Toast.makeText(MainActivity.this,String.format("user %s logged out",username),Toast.LENGTH_SHORT).show();
             }
+
+            @Override
+            public void onSendMessageSucceeded(Object key) {
+                Toast.makeText(MainActivity.this,String.format("sent a message"),Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onSendMessageFailed(Object key, String reason) {
+                Toast.makeText(MainActivity.this,String.format("failed to send a message"),Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onMessageDelivered(String sender, String recipient, String subject, String body, long born_on_date, long time_to_live) {
+                Toast.makeText(MainActivity.this,String.format("got message from %s",sender),Toast.LENGTH_SHORT).show();
+
+            }
         });
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        getPreferences(Context.MODE_PRIVATE).edit().putString("ServerName",getServerName()).commit();
+        String serverName = ((EditText)findViewById(R.id.servername)).getText().toString();
+        getPreferences(Context.MODE_PRIVATE).edit().putString("ServerName",serverName).commit();
+    }
+
+    public void doCheckAPIVersion(View view){
+        serverAPI.checkAPIVersion();
     }
 
     public void doRegister(View view) {
         serverAPI.setServerName(getServerName());
 
-        InputStream is = null;
+        InputStream is;
         byte[] buffer = new byte[0];
         try {
             is = getAssets().open("images/ic_android_black_24dp.png");
@@ -136,7 +205,8 @@ public class MainActivity extends AppCompatActivity {
         serverAPI.setServerName(getServerName());
 
         if(myUserMap.containsKey("alice")) {
-            serverAPI.sendMessage(myUserMap.get("alice").publicKey,
+            serverAPI.sendMessage(new Object(), // I don't have an object to keep track of, but I need one!
+                    myUserMap.get("alice").publicKey,
                     getUserName(),
                     "alice",
                     "test message",

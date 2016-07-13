@@ -19,7 +19,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
@@ -29,7 +28,8 @@ import javax.crypto.SecretKey;
  * Created by kbaldor on 7/4/16.
  */
 public class ServerAPI {
-    private static String LOG = "ServerAPI";
+    public final String API_VERSION = "0.3.0";
+    private static String LOG       = "ServerAPI";
 
     private static ServerAPI ourInstance;
 
@@ -77,6 +77,22 @@ public class ServerAPI {
                 });
     }
 
+    public void checkAPIVersion(){
+        getStringCommand(makeURL("api-version"),
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String s) {
+                        if(s.equals(API_VERSION)) sendGoodAPIVersion(); else sendBadAPIVersion();
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        sendCommandFailed("checkAPIVersion",error);
+                    }
+                });
+    }
+
     public void register(final String username, String image, String publicKey) {
         putJSONCommand(makeURL("register"), keyValuePairs("username",username,
                                                           "image",image,
@@ -86,13 +102,12 @@ public class ServerAPI {
                     @Override
                     public void onResponse(JSONObject response) {
                         handleRegisterResponse(response);
-                        getUserInfo(username);
                     }
                 }, new Response.ErrorListener() {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                // TODO report error
+                sendCommandFailed("register",error);
             }
         });
 
@@ -100,8 +115,12 @@ public class ServerAPI {
 
     private void handleRegisterResponse(JSONObject response){
         try {
-            Log.d(LOG,"Response: status: " + response.get("status").toString() +
-                               " reason: " + response.get("reason").toString());
+            Log.d(LOG,"Response: status: " + response.getString("status") +
+                               " reason: " + response.getString("reason"));
+            if(response.getString("status").equals("ok"))
+                sendRegistrationSucceeded();
+            else
+                sendRegistrationFailed(response.getString("reason"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -109,7 +128,7 @@ public class ServerAPI {
 
     public void getUserInfo(final String username){
         String url = makeURL("get-contact-info",username);
-        Log.d(LOG,"registering with "+url);
+        Log.d(LOG,"getting user info with "+url);
 
         getJSONCommand(makeURL("get-contact-info",username),
                 new Response.Listener<JSONObject>() {
@@ -134,33 +153,34 @@ public class ServerAPI {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                // TODO Auto-generated method stub
-                Log.d(LOG,"That didn't work :(",error);
+                sendCommandFailed("getUserInfo",error);
             }
         });
     }
 
     public void login(final String username,final Crypto crypto) {
-        if(serverKey!=null)
-            getStringCommand(makeURL("get-challenge",username),
+        if(serverKey!=null) {
+            getStringCommand(makeURL("get-challenge", username),
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String challenge) {
-                            processChallengeAndLogin(challenge,username,crypto);
+                            processChallengeAndLogin(challenge, username, crypto);
                         }
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            //TODO: report failure
+                            sendCommandFailed("login", error);
                         }
                     });
-        //else TODO: report failure
+        } else {
+            sendLoginFailed("server key was null");
+        }
     }
 
 
     private void processChallengeAndLogin(final String challenge, final String username,final Crypto crypto) {
         byte[] decrypted = crypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
-        String response = Base64.encodeToString(crypto.encryptRSA(decrypted,serverKey),Base64.NO_WRAP);
+        String response = Base64.encodeToString(Crypto.encryptRSA(decrypted,serverKey),Base64.NO_WRAP);
 
         putJSONCommand(makeURL("login"), keyValuePairs("username",username,
                                                        "response",response),
@@ -174,8 +194,7 @@ public class ServerAPI {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                // TODO Auto-generated method stub
-                Log.d(LOG,"That didn't work :(",error);
+                sendCommandFailed("login",error);
             }
         });
 
@@ -183,34 +202,40 @@ public class ServerAPI {
 
     private void handleLoginResponse(JSONObject response){
         try {
-            Log.d(LOG,"Response: " + response.get("status").toString());
+            if(response.getString("status").equals("ok"))
+                sendLoginSucceeded();
+            else
+                sendLoginFailed(response.getString("reason"));
         } catch (JSONException e) {
             e.printStackTrace();
+            sendLoginFailed("unable to parse JSON response");
         }
     }
 
 
     public void logout(final String username,final Crypto crypto) {
-        if(serverKey!=null)
-            getStringCommand(makeURL("get-challenge",username),
+        if(serverKey!=null) {
+            getStringCommand(makeURL("get-challenge", username),
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String challenge) {
-                            processChallengeAndLogout(challenge,username,crypto);
+                            processChallengeAndLogout(challenge, username, crypto);
                         }
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            //TODO: report failure
+                            sendCommandFailed("logout", error);
                         }
                     });
-        //else TODO: report failure
+        } else {
+            sendLogoutFailed("server key was null");
+        }
     }
 
 
     private void processChallengeAndLogout(final String challenge, final String username,final Crypto crypto) {
         byte[] decrypted = crypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
-        String response = Base64.encodeToString(crypto.encryptRSA(decrypted,serverKey),Base64.NO_WRAP);
+        String response = Base64.encodeToString(Crypto.encryptRSA(decrypted,serverKey),Base64.NO_WRAP);
 
         putJSONCommand(makeURL("logout"), keyValuePairs("username",username,
                                                         "response",response),
@@ -224,17 +249,20 @@ public class ServerAPI {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO Auto-generated method stub
-                        Log.d(LOG,"That didn't work :(",error);
+                        sendCommandFailed("logout",error);
                     }
                 });
     }
 
     private void handleLogoutResponse(JSONObject response){
         try {
-            Log.d(LOG,"Response: " + response.get("status").toString());
+            if(response.getString("status").equals("ok"))
+                sendLogoutSucceeded();
+            else
+                sendLogoutFailed(response.getString("reason"));
         } catch (JSONException e) {
             e.printStackTrace();
+            sendLogoutFailed("unable to parse JSON response");
         }
     }
 
@@ -266,7 +294,7 @@ public class ServerAPI {
      */
     public void startPushListener(final String username){
         String url = makeURL("wait-for-push",username);
-        Log.d(LOG,"registering with "+url);
+        Log.d(LOG,"waiting for push with "+url);
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest(Request.Method.GET, url, null,
                 new Response.Listener<JSONObject>() {
@@ -284,8 +312,7 @@ public class ServerAPI {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                // TODO Auto-generated method stub
-                Log.d(LOG,"That didn't work :(",error);
+                sendCommandFailed("pushListener",error);
             }
         });
         jsObjRequest.setRetryPolicy(new DefaultRetryPolicy(
@@ -313,10 +340,11 @@ public class ServerAPI {
     }
 
     private String decryptAES64ToString(String aes64, SecretKey aesKey) throws UnsupportedEncodingException {
-        return new String(
-                Crypto.decryptAES(
-                        Base64.decode(aes64,Base64.NO_WRAP), aesKey),
-                "UTF-8");
+        byte[] bytes = Base64.decode(aes64,Base64.NO_WRAP);
+        if(bytes==null) return null;
+        bytes = Crypto.decryptAES(bytes, aesKey);
+        if(bytes==null) return null;
+        return new String(bytes,"UTF-8");
     }
 
     private void handleMessage(JSONObject message){
@@ -324,6 +352,7 @@ public class ServerAPI {
         try{
             SecretKey aesKey = Crypto.getAESSecretKeyFromBytes(myCrypto.decryptRSA(Base64.decode(message.getString("aes-key"),Base64.NO_WRAP)));
             String sender = decryptAES64ToString(message.getString("sender"),aesKey);
+            String recipient = decryptAES64ToString(message.getString("recipient"),aesKey);
             String body = decryptAES64ToString(message.getString("body"),aesKey);
             String subject = decryptAES64ToString(message.getString("subject-line"),aesKey);
             Long born = Long.parseLong(decryptAES64ToString(message.getString("born-on-date"),aesKey));
@@ -332,10 +361,9 @@ public class ServerAPI {
             Log.d(LOG,subject+":");
             Log.d(LOG,body);
             Log.d(LOG,"ttl: "+ttl);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            sendMessageDelivered(sender,recipient,subject,body,born,ttl);
+        } catch (Exception e) {
+            Log.d(LOG,"Failed to parse message",e);
         }
 
     }
@@ -360,7 +388,12 @@ public class ServerAPI {
         return "";
     }
 
-    public void sendMessage(PublicKey recipientKey,
+    /*
+     * The messageReference can be any object. It is used to keep track of which messages
+     * succeeded or failed
+     */
+    public void sendMessage(final Object messageReference,
+                            PublicKey recipientKey,
                             String sender,
                             String recipient,
                             String subjectLine,
@@ -368,8 +401,14 @@ public class ServerAPI {
                             Long bornOnDate,
                             Long timeToLive) {
         SecretKey aesKey = Crypto.createAESKey();
+        byte[] aesKeyBytes = aesKey.getEncoded();
+        if(aesKeyBytes==null){
+            Log.d(LOG,"AES key failed (this should never happen)");
+            sendSendMessageFailed(messageReference,"AES key failed");
+            return;
+        }
         String base64encryptedAESKey =
-                Base64.encodeToString(Crypto.encryptRSA(aesKey.getEncoded(),recipientKey),
+                Base64.encodeToString(Crypto.encryptRSA(aesKeyBytes,recipientKey),
                         Base64.NO_WRAP);
 
         putJSONCommand(makeURL("send-message",recipient),
@@ -383,19 +422,28 @@ public class ServerAPI {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-                        handleSendResponse(response);
+                        handleSendResponse(messageReference, response);
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError volleyError) {
-                        //TODO: handle send error
+                        sendCommandFailed("sendMessage",volleyError);
+                        sendSendMessageFailed(messageReference,volleyError.getMessage());
                     }
                 });
 
     }
 
-    private void handleSendResponse(JSONObject response){
-        Log.d(LOG,"send response: "+response);
+    private void handleSendResponse(Object reference, JSONObject response){
+        try {
+            if (response.getString("status").equals("ok")) {
+                sendSendMessageSucceeded(reference);
+            } else {
+                sendSendMessageFailed(reference, response.getString("reason"));
+            }
+        } catch (JSONException e) {
+            sendSendMessageFailed(reference,"possible failure: unable to parse JSON response");
+        }
     }
 
     private void getStringCommand(String url,
@@ -445,10 +493,26 @@ public class ServerAPI {
     }
 
     public interface Listener {
+        void onCommandFailed(String commandName, VolleyError volleyError);
+        void onGoodAPIVersion();
+        void onBadAPIVersion();
+        void onRegistrationSucceeded();
+        void onRegistrationFailed(String reason);
+        void onLoginSucceeded();
+        void onLoginFailed(String reason);
+        void onLogoutSucceeded();
+        void onLogoutFailed(String reason);
         void onUserInfo(UserInfo info);
         void onUserNotFound(String username);
         void onContactLogin(String username);
         void onContactLogout(String username);
+        void onSendMessageSucceeded(Object key);
+        void onSendMessageFailed(Object key, String reason);
+        void onMessageDelivered(String sender,String recipient,
+                                String subject,String body,
+                                long born_on_date,
+                                long time_to_live);
+
     }
 
     private ArrayList<Listener> myListeners = new ArrayList<>();
@@ -456,6 +520,58 @@ public class ServerAPI {
     public void registerListener(Listener listener){myListeners.add(listener);}
     public void unregisterListener(Listener listener){myListeners.remove(listener);}
 
+    private void sendCommandFailed(String commandName, VolleyError volleyError){
+        for(Listener listener : myListeners){
+            listener.onCommandFailed(commandName,volleyError);
+        }
+    }
+
+    private void sendGoodAPIVersion(){
+        for(Listener listener : myListeners){
+            listener.onGoodAPIVersion();
+        }
+    }
+
+    private void sendBadAPIVersion(){
+        for(Listener listener : myListeners){
+            listener.onBadAPIVersion();
+        }
+    }
+
+    private void sendRegistrationSucceeded(){
+        for(Listener listener : myListeners){
+            listener.onRegistrationSucceeded();
+        }
+    }
+    private void sendRegistrationFailed(String reason){
+        for(Listener listener : myListeners){
+            listener.onRegistrationFailed(reason);
+        }
+    }
+
+    private void sendLoginSucceeded(){
+        for(Listener listener : myListeners){
+            listener.onLoginSucceeded();
+        }
+    }
+
+    private void sendLoginFailed(String reason){
+        for(Listener listener : myListeners){
+            listener.onLoginFailed(reason);
+        }
+    }
+
+    private void sendLogoutSucceeded(){
+        for(Listener listener : myListeners){
+            listener.onLogoutSucceeded();
+        }
+    }
+
+    private void sendLogoutFailed(String reason){
+        for(Listener listener : myListeners){
+            listener.onLogoutFailed(reason);
+        }
+    }
     private void sendUserInfo(UserInfo info){
         for(Listener listener : myListeners){
             listener.onUserInfo(info);
@@ -477,5 +593,28 @@ public class ServerAPI {
         }
     }
 
+    private void sendSendMessageSucceeded(Object key){
+        for(Listener listener: myListeners){
+            listener.onSendMessageSucceeded(key);
+        }
+    }
+
+    private void sendSendMessageFailed(Object key, String reason){
+        for(Listener listener: myListeners){
+            listener.onSendMessageFailed(key, reason);
+        }
+    }
+
+    private void sendMessageDelivered(String sender,String recipient,
+                                      String subject,String body,
+                                      long born_on_date,
+                                      long time_to_live){
+        for(Listener listener : myListeners) {
+            listener.onMessageDelivered(
+                    sender,recipient,
+                    subject,body,
+                    born_on_date,time_to_live);
+        }
+    }
 
 }

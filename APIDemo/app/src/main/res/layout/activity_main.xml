@@ -33,6 +33,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="14pt"
+                android:text="CheckAPIVersion"
+                android:onClick="doCheckAPIVersion"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14pt"
                 android:text="Register"
                 android:onClick="doRegister"/>
             <Button
