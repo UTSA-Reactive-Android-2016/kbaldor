@@ -49,10 +49,13 @@
 (defn get-contact-info
   [username]
   (println "getting contact info for" username)
-  {:username (get-in @users/user-info-map [username :username])
+  (if (contains? @users/user-info-map username)
+  {:status "ok"
+   :username (get-in @users/user-info-map [username :username])
    :image (get-in @users/user-info-map [username :image])
    :key (get-in @users/user-info-map [username :key64])
-   })
+   }
+  (status/fail "user not found")))
 
 (defn get-challenge
   [username]

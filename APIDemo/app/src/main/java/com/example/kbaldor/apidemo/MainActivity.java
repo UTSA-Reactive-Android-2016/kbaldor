@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getServerName(){
-        return ((EditText)findViewById(R.id.servername)).getText().toString();
+        return ((EditText)findViewById(R.id.servername)).getText().toString()+":3000";
     }
 
 
@@ -38,20 +38,25 @@ public class MainActivity extends AppCompatActivity {
         String serverName = getPreferences(Context.MODE_PRIVATE).getString("ServerName","127.0.0.1");
 
         ((EditText)findViewById(R.id.servername)).setText(serverName);
-        serverAPI = ServerAPI.getInstance(this.getApplicationContext());
-
-        serverAPI.setServerName(serverName);
 
         myCrypto = new Crypto(getPreferences(Context.MODE_PRIVATE));
         myCrypto.saveKeys(getPreferences(Context.MODE_PRIVATE));
 
+        serverAPI = ServerAPI.getInstance(this.getApplicationContext(),
+                myCrypto);
 
-        serverAPI.setCrypto(myCrypto);
+        serverAPI.setServerName(serverName);
+
 
         serverAPI.registerListener(new ServerAPI.Listener() {
             @Override
             public void onUserInfo(ServerAPI.UserInfo info) {
                 myUserMap.put(info.username,info);
+            }
+
+            @Override
+            public void onUserNotFound(String username) {
+                Toast.makeText(MainActivity.this,String.format("user %s not found!",username),Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -120,6 +125,12 @@ public class MainActivity extends AppCompatActivity {
         serverAPI.setServerName(getServerName());
         serverAPI.getUserInfo("alice");
     }
+
+    public void doGetNobodyInfo(View view){
+        serverAPI.setServerName(getServerName());
+        serverAPI.getUserInfo("a_name_that_doesnt_exist");
+    }
+
 
     public void doSendMessageToAlice(View view){
         serverAPI.setServerName(getServerName());

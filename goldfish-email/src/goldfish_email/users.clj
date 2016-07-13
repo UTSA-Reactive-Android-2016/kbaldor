@@ -169,7 +169,7 @@
     (println (format "from sender '%s'" sender))
     (send-fake-email sender recipient
                      "Re: your message"
-                     (format "What exactly do you mean by '%s'" body)
+                     (format "What exactly do you mean by '%s'?" body)
                      15000)
     status/success))
 

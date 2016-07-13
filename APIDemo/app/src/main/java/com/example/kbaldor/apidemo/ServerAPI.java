@@ -40,10 +40,11 @@ public class ServerAPI {
 
     Crypto myCrypto;
 
-    public static ServerAPI getInstance(Context context) {
+    public static ServerAPI getInstance(Context context, Crypto crypto) {
 
         if(ourInstance==null){
             ourInstance = new ServerAPI(context);
+            ourInstance.myCrypto = crypto;
         }
         return ourInstance;
     }
@@ -56,7 +57,7 @@ public class ServerAPI {
     private String myServerName = "SERVER_NAME_NOT_SPECIFIED";
 
     private String makeURL(String... args){
-        return "http://"+myServerName+":3000/"+TextUtils.join("/",args);
+        return "http://"+myServerName+"/"+TextUtils.join("/",args);
     }
 
     public void setServerName(final String serverName){
@@ -74,10 +75,6 @@ public class ServerAPI {
                         Log.d(LOG,"Couldn't get key",error);
                     }
                 });
-    }
-
-    public void setCrypto(Crypto crypto) {
-        myCrypto = crypto;
     }
 
     public void register(final String username, String image, String publicKey) {
@@ -110,7 +107,7 @@ public class ServerAPI {
         }
     }
 
-    public void getUserInfo(String username){
+    public void getUserInfo(final String username){
         String url = makeURL("get-contact-info",username);
         Log.d(LOG,"registering with "+url);
 
@@ -120,9 +117,14 @@ public class ServerAPI {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            sendUserInfo(new UserInfo(response.getString("username"),
-                                    response.getString("image"),
-                                    response.getString("key")));
+                            String status = response.getString("status");
+                            if(status.equals("ok")) {
+                                sendUserInfo(new UserInfo(response.getString("username"),
+                                        response.getString("image"),
+                                        response.getString("key")));
+                            } else {
+                                sendUserNotFound(username);
+                            }
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -444,6 +446,7 @@ public class ServerAPI {
 
     public interface Listener {
         void onUserInfo(UserInfo info);
+        void onUserNotFound(String username);
         void onContactLogin(String username);
         void onContactLogout(String username);
     }
@@ -456,6 +459,11 @@ public class ServerAPI {
     private void sendUserInfo(UserInfo info){
         for(Listener listener : myListeners){
             listener.onUserInfo(info);
+        }
+    }
+    private void sendUserNotFound(String username){
+        for(Listener listener : myListeners){
+            listener.onUserNotFound(username);
         }
     }
     private void sendContactLogin(String username){

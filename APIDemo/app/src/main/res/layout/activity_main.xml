@@ -57,6 +57,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="14pt"
+                android:text="Get Nobody's Contact Info"
+                android:onClick="doGetNobodyInfo"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14pt"
                 android:text="Get Alice's Contact Info"
                 android:onClick="doGetAliceInfo"/>
             <Button
