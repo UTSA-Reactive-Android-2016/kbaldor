@@ -173,18 +173,20 @@
                      15000)
     status/success))
 
-(future
-  (while true
-    (do
-      (Thread/sleep 10000)
-      (log-in "bob")
-      (Thread/sleep 10000)
-      (log-out "bob"))))
+(defn start-fake-users []
+  (future
+    (while true
+      (do
+        (Thread/sleep 10000)
+        (log-in "bob")
+        (Thread/sleep 10000)
+        (log-out "bob"))))
 
-;(future
-;  (while true
-;    (do
-;      (Thread/sleep 7000)
-;      (log-in "alice")
-;      (Thread/sleep 7000)
-;      (log-out "alice"))))
+  ;(future
+  ;  (while true
+  ;    (do
+  ;      (Thread/sleep 7000)
+  ;      (log-in "alice")
+  ;      (Thread/sleep 7000)
+  ;      (log-out "alice"))))
+  )

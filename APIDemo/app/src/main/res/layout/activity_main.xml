@@ -33,7 +33,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="14pt"
-                android:text="CheckAPIVersion"
+                android:text="Check API Version"
                 android:onClick="doCheckAPIVersion"/>
             <Button
                 android:layout_width="match_parent"

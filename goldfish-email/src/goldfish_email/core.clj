@@ -67,11 +67,14 @@
   (let [user (@users/user-info-map username)]
     (if (nil? user)
       "user-not-registered"
-      (do
+      (try
         (let [bytes (crypto.random/bytes 64)
               encrypted (my-crypto/encrypt (:key user) bytes)]
           (users/set-challenge username bytes)
-          (Base64/encodeBase64String encrypted))))))
+          (Base64/encodeBase64String encrypted))
+        (catch Exception e
+          (println "caught exception" e)
+          (status/fail (.getMessage e)))))))
 
 (defn login-handler
   [ctx]
@@ -184,7 +187,8 @@
     (read-string s)))
 
 (defn -main [& args]
-  (def host (if (first args) (first args) "127.0.0.1"))
+  (def host (if (first args) (first args) (first network/ips)))
   (def port (if (and (second args) (parse-number (second args)))
               (parse-number (second args)) 3000))
+  (users/start-fake-users)
   (run-jetty handler {:host host :port port}))
