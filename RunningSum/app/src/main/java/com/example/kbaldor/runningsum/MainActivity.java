@@ -10,22 +10,48 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.Random;
 
+import nz.sodium.Cell;
+import nz.sodium.CellLoop;
 import nz.sodium.Handler;
 import nz.sodium.StreamSink;
+import nz.sodium.Transaction;
+import nz.sodium.Unit;
 
 public class MainActivity extends AppCompatActivity {
 
     Random myRandom = new Random();
 
-    StreamSink<String>  historyLengthString = new StreamSink<>();
-    StreamSink<Integer> nextRandom = new StreamSink<>();
+    StreamSink<Integer> nextRandom     = new StreamSink<>();
+
+    StreamSink<Unit>    incrementEvent = new StreamSink<>();
+    StreamSink<Unit>    decrementEvent = new StreamSink<>();
+
+    // I normally wouldn't put these here, but I wanted to provide a hint
+    CellLoop<Integer>            N;
+    CellLoop<ArrayList<Integer>> lastNValues;
+    Cell<Integer>                sum;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // You need a transaction for closing loops
+        Transaction.runVoid(new Runnable() {
+            @Override
+            public void run() {
+
+                // define your reactive network here
+
+
+
+
+
+            }
+        });
 
     }
 
@@ -34,11 +60,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void decN(View view){
-        // decrement N
+        decrementEvent.send(Unit.UNIT);
     }
 
     public void incN(View view){
-        // increment N
+        incrementEvent.send(Unit.UNIT);
     }
 
 }
