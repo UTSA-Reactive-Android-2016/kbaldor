@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-ring "0.8.11"]]
   :ring {:handler goldfish-email.core/handler
-         :host "192.168.0.10"
+         ;:host "192.168.0.10"
          ;:host "129.162.167.152"
          ;:host "172.24.1.218"
          }

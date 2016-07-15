@@ -19,6 +19,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.PublicKey;
 import java.util.ArrayList;
 
@@ -55,26 +57,48 @@ public class ServerAPI {
     }
 
     private String myServerName = "SERVER_NAME_NOT_SPECIFIED";
+    private String myServerPort = "25666";
 
     private String makeURL(String... args){
-        return "http://"+myServerName+"/"+TextUtils.join("/",args);
+        return "http://"+myServerName+":"+myServerPort+"/"+TextUtils.join("/",args);
+    }
+
+    private void getServerAddress(final String servername){
+        (new Thread(){
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    Log.d(LOG,"Address is: "+InetAddress.getByName(servername).getHostAddress());
+                    getStringCommand(makeURL("get-key"),
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String key) {
+                                    serverKey = Crypto.getPublicKeyFromString(key);
+                                }
+                            }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    Log.d(LOG,"Couldn't get key",error);
+                                }
+                            });
+
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }).start();
+    }
+
+    public void setServerPort(final String serverPort){
+        myServerPort = serverPort;
     }
 
     public void setServerName(final String serverName){
 
         myServerName = serverName;
-        getStringCommand(makeURL("get-key"),
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String key) {
-                        serverKey = Crypto.getPublicKeyFromString(key);
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d(LOG,"Couldn't get key",error);
-                    }
-                });
+        getServerAddress(serverName);
     }
 
     public void checkAPIVersion(){

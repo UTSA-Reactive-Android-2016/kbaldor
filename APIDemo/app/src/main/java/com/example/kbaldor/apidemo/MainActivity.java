@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getServerName(){
-        return ((EditText)findViewById(R.id.servername)).getText().toString()+":3000";
+        return ((EditText)findViewById(R.id.servername)).getText().toString();
     }
 
 
@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
                 myCrypto);
 
         serverAPI.setServerName(getServerName());
+        serverAPI.setServerPort("25666");
 
 
         serverAPI.registerListener(new ServerAPI.Listener() {
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
             public void onCommandFailed(String commandName, VolleyError volleyError) {
                 Toast.makeText(MainActivity.this,String.format("command %s failed!",commandName),
                         Toast.LENGTH_SHORT).show();
+                volleyError.printStackTrace();
             }
 
             @Override
@@ -143,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void doCheckAPIVersion(View view){
+        serverAPI.setServerName(getServerName());
         serverAPI.checkAPIVersion();
     }
 

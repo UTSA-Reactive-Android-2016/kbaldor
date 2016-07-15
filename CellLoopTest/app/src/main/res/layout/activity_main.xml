@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="24pt"
-            android:text="100"
+            android:text="20"
             android:id="@+id/Max"/>
     </LinearLayout>
     <LinearLayout
@@ -69,4 +69,11 @@
             android:text="0"
             android:id="@+id/Min"/>
     </LinearLayout>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="24pt"
+        android:text="BOTH"
+        android:onClick="inc_and_dec"
+        />
 </LinearLayout>
