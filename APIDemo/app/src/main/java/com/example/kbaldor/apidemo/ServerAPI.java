@@ -30,7 +30,7 @@ import javax.crypto.SecretKey;
  * Created by kbaldor on 7/4/16.
  */
 public class ServerAPI {
-    public final String API_VERSION = "0.3.0";
+    public final String API_VERSION = "0.4.0";
     private static String LOG       = "ServerAPI";
 
     private static ServerAPI ourInstance;

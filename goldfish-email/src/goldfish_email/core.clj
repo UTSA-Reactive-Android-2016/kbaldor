@@ -23,86 +23,125 @@
   (re-matches #"^[a-zA-Z][a-zA-Z0-9\-]*$" username)
   )
 
+(defn special-username?
+  [username]
+  (.contains #{"alice" "bob" "charlie"} (.toLowerCase username))
+  )
+
 (defn register-handler
   [ctx]
-  (let [body        (slurp (get-in ctx [:request :body]))
-        data        (json/read-str body)
-        username    (get-in data ["username"])
-        image       (get-in data ["image"])
-        image-bytes (Base64/decodeBase64 image)
-        key64       (get-in data ["public-key"])
-        key         (my-crypto/decode-base64-rsa-public-key key64)]
-    (if (legal-username? username)
-      (if (im-proc/legal-png? image-bytes)
-        (do
-          (users/register username image key64 key)
-          status/success)
-        (status/fail (im-proc/png-issues image-bytes)))
-      (status/fail "username must begin with a letter and consist only of letters, numbers, and hyphens"))))
+  (try
+    (let [body (slurp (get-in ctx [:request :body]))
+         data (json/read-str body)
+         username (get-in data ["username"])
+         image (get-in data ["image"])
+         image-bytes (Base64/decodeBase64 image)
+         key64 (get-in data ["public-key"])
+         key (my-crypto/decode-base64-rsa-public-key key64)]
+     (if (legal-username? username)
+       (if (not (special-username? username))
+         (if (im-proc/legal-png? image-bytes)
+           (do
+             (users/register username image key64 key)
+             status/success)
+           (status/fail (im-proc/png-issues image-bytes)))
+         (status/fail (format "username %s is reserved" username)))
+       (status/fail "username must begin with a letter and consist only of letters, numbers, and hyphens")))
+    (catch Exception e
+      (do
+        (println "caught exception " e)
+        (status/fail (format "Caught exception on register: %s" (.getMessage e)))))))
 
 (defn register-friends-handler
   [ctx]
-  (let [body        (slurp (get-in ctx [:request :body]))
-        json        (json/read-str body)
-        username    (get-in json ["username"])
-        friends     (get-in json ["friends"])]
-    (println "body" body)
-    (println username "has friends" friends)
-    (users/set-friends username friends)
-    status/success))
+  (try
+    (let [body (slurp (get-in ctx [:request :body]))
+         json (json/read-str body)
+         username (get-in json ["username"])
+         friends (get-in json ["friends"])]
+      ;(println "body" body)
+      ;(println username "has friends" friends)
+     (users/set-friends username friends)
+     (assoc status/success
+            :friend-status-map
+            (users/get-status-map friends)))
+    (catch Exception e
+      (do
+        (println "caught exception " e)
+        (status/fail (format "Caught exception on register-friends: %s" (.getMessage e)))))))
 
 (defn get-contact-info
   [username]
-  (println "getting contact info for" username)
-  (if (contains? @users/user-info-map username)
-  {:status "ok"
-   :username (get-in @users/user-info-map [username :username])
-   :image (get-in @users/user-info-map [username :image])
-   :key (get-in @users/user-info-map [username :key64])
-   }
-  (status/fail "user not found")))
+  (try
+    (println "getting contact info for" username)
+    (if (contains? @users/user-info-map username)
+      {:status "ok"
+       :username (get-in @users/user-info-map [username :username])
+       :image (get-in @users/user-info-map [username :image])
+       :key (get-in @users/user-info-map [username :key64])
+       }
+      (status/fail "user not found"))
+    (catch Exception e
+      (do
+        (println "caught exception " e)
+        (status/fail (format "Caught exception on get-contact-info: %s" (.getMessage e)))))))
 
 (defn get-challenge
   [username]
-  (let [user (@users/user-info-map username)]
-    (if (nil? user)
-      "user-not-registered"
-      (try
-        (let [bytes (crypto.random/bytes 64)
-              encrypted (my-crypto/encrypt (:key user) bytes)]
-          (users/set-challenge username bytes)
-          (Base64/encodeBase64String encrypted))
-        (catch Exception e
-          (println "caught exception" e)
-          (status/fail (.getMessage e)))))))
+  (try
+    (let [user (@users/user-info-map username)]
+     (if (nil? user)
+       "user-not-registered"
+       (try
+         (let [bytes (crypto.random/bytes 64)
+               encrypted (my-crypto/encrypt (:key user) bytes)]
+           (users/set-challenge username bytes)
+           (Base64/encodeBase64String encrypted))
+         (catch Exception e
+           (println "caught exception" e)
+           (status/fail (.getMessage e))))))
+    (catch Exception e
+      (do
+        (println "caught exception " e)
+        (status/fail (format "Caught exception on get-challenge: %s" (.getMessage e)))))))
 
 (defn login-handler
   [ctx]
-  (let [body             (slurp (get-in ctx [:request :body]))
-        data             (json/read-str body)
-        username         (get-in data ["username"])
-        response         (get-in data ["response"])
-        decoded-response (my-crypto/decrypt-base64-string response)
-        last-challenge   (users/get-last-challenge username)]
-    (if (= (seq last-challenge) (seq decoded-response))
+  (try
+    (let [body (slurp (get-in ctx [:request :body]))
+         data (json/read-str body)
+         username (get-in data ["username"])
+         response (get-in data ["response"])
+         decoded-response (my-crypto/decrypt-base64-string response)
+         last-challenge (users/get-last-challenge username)]
+     (if (= (seq last-challenge) (seq decoded-response))
+       (do
+         (users/log-in username)
+         status/success)
+       (status/fail "failed challenge")))
+    (catch Exception e
       (do
-        (users/log-in username)
-        status/success)
-      (status/fail "failed challenge"))))
+        (println "caught exception " e)
+        (status/fail (format "Caught exception on login: %s" (.getMessage e)))))))
 
 (defn logout-handler
   [ctx]
-  (let [body             (slurp (get-in ctx [:request :body]))
-        data             (json/read-str body)
-        username         (get-in data ["username"])
-        response         (get-in data ["response"])
-        decoded-response (my-crypto/decrypt-base64-string response)
-        last-challenge   (users/get-last-challenge username)]
-    (if (= (seq last-challenge) (seq decoded-response))
+  (try
+    (let [body (slurp (get-in ctx [:request :body]))
+         data (json/read-str body)
+         username (get-in data ["username"])
+         response (get-in data ["response"])
+         decoded-response (my-crypto/decrypt-base64-string response)
+         last-challenge (users/get-last-challenge username)]
+     (if (= (seq last-challenge) (seq decoded-response))
+       (do
+         (users/log-out username)
+         status/success)
+       (status/fail "failed challenge")))
+    (catch Exception e
       (do
-        (users/log-out username)
-        status/success)
-      (status/fail "failed challenge"))))
+        (println "caught exception " e)
+        (status/fail (format "Caught exception on logout: %s" (.getMessage e)))))))
 
 (defn get-user-image
   [id]
@@ -160,7 +199,7 @@
 
 (defroutes app
            (GET "/" [] html/get-users-table)
-           (ANY "/api-version" [] "0.3.0")
+           (ANY "/api-version" [] "0.4.0")
            (GET "/get-challenge/:username"      [username]  (get-challenge username))
            (PUT "/login"                        []          (json-put-resource login-handler))
            (PUT "/logout"                       []          (json-put-resource logout-handler))

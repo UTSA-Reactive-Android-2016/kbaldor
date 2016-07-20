@@ -37,6 +37,16 @@
     (doseq [friend friends]
       (alter friends-inv-map assoc friend (set (conj (friends-inv-map friend) username))))))
 
+(defn get-login-status
+  [friend]
+  (if (contains? @current-users friend)
+    "logged-in"
+    "logged-out"))
+
+(defn get-status-map
+  [friends]
+  (zipmap friends (map get-login-status friends)))
+
 (defn remove-from-friends
   [username]
   (dosync
@@ -177,9 +187,9 @@
   (future
     (while true
       (do
-        (Thread/sleep 10000)
+        (Thread/sleep 5000)
         (log-in "bob")
-        (Thread/sleep 10000)
+        (Thread/sleep 5000)
         (log-out "bob"))))
 
   ;(future
