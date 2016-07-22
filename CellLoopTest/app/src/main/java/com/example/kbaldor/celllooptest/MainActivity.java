@@ -120,13 +120,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void onMinus(View view){
-
-    }
-    public void onPlus(View view){
-
-    }
-
     public void inc_and_dec(View view) {
         Transaction.runVoid(new Runnable() {
             @Override

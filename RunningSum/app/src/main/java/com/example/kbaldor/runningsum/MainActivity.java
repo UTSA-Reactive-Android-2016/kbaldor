@@ -46,10 +46,6 @@ public class MainActivity extends AppCompatActivity {
 
                 // define your reactive network here
 
-
-
-
-
             }
         });
 

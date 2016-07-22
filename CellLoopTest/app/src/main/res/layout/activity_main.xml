@@ -35,8 +35,7 @@
             android:layout_height="wrap_content"
             android:textSize="24pt"
             android:id="@+id/Minus"
-            android:text="-"
-            android:onClick="onMinus"/>
+            android:text="-"/>
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -48,8 +47,7 @@
             android:layout_height="wrap_content"
             android:textSize="24pt"
             android:id="@+id/Plus"
-            android:text="+"
-            android:onClick="onPlus"/>
+            android:text="+"/>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
