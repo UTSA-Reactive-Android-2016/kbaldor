@@ -25,7 +25,7 @@
 
 (defn special-username?
   [username]
-  (.contains #{"alice" "bob" "charlie"} (.toLowerCase username))
+  (.contains #{"alice" "bob" "charlie" "cathy"} (.toLowerCase username))
   )
 
 (defn register-handler
