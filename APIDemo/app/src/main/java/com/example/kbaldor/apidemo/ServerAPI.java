@@ -188,7 +188,12 @@ public class ServerAPI {
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String challenge) {
-                            processChallengeAndLogin(challenge, username, crypto);
+                            Log.d(LOG,"challenge string "+challenge);
+                            if(challenge.equals("user-not-registered")){
+                                sendLoginFailed("user not registered");
+                            } else {
+                                processChallengeAndLogin(challenge, username, crypto);
+                            }
                         }
                     }, new Response.ErrorListener() {
                         @Override
@@ -203,24 +208,28 @@ public class ServerAPI {
 
 
     private void processChallengeAndLogin(final String challenge, final String username,final Crypto crypto) {
-        byte[] decrypted = crypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
-        String response = Base64.encodeToString(Crypto.encryptRSA(decrypted,serverKey),Base64.NO_WRAP);
+        try {
+            byte[] decrypted = crypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
+            String response = Base64.encodeToString(Crypto.encryptRSA(decrypted, serverKey), Base64.NO_WRAP);
 
-        putJSONCommand(makeURL("login"), keyValuePairs("username",username,
-                                                       "response",response),
-                new Response.Listener<JSONObject>() {
+            putJSONCommand(makeURL("login"), keyValuePairs("username", username,
+                    "response", response),
+                    new Response.Listener<JSONObject>() {
 
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        handleLoginResponse(response);
-                    }
-                }, new Response.ErrorListener() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            handleLoginResponse(response);
+                        }
+                    }, new Response.ErrorListener() {
 
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                sendCommandFailed("login",error);
-            }
-        });
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            sendCommandFailed("login", error);
+                        }
+                    });
+        } catch (Exception ex) {
+            sendLoginFailed(ex.getMessage());
+        }
 
     }
 
@@ -243,7 +252,11 @@ public class ServerAPI {
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String challenge) {
-                            processChallengeAndLogout(challenge, username, crypto);
+                            if(challenge.equals("user-not-registered")){
+                                sendLogoutFailed("user not registered");
+                            } else {
+                                processChallengeAndLogout(challenge, username, crypto);
+                            }
                         }
                     }, new Response.ErrorListener() {
                         @Override
@@ -258,24 +271,28 @@ public class ServerAPI {
 
 
     private void processChallengeAndLogout(final String challenge, final String username,final Crypto crypto) {
-        byte[] decrypted = crypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
-        String response = Base64.encodeToString(Crypto.encryptRSA(decrypted,serverKey),Base64.NO_WRAP);
+        try{
+            byte[] decrypted = crypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
+            String response = Base64.encodeToString(Crypto.encryptRSA(decrypted,serverKey),Base64.NO_WRAP);
 
-        putJSONCommand(makeURL("logout"), keyValuePairs("username",username,
-                                                        "response",response),
-                new Response.Listener<JSONObject>() {
+            putJSONCommand(makeURL("logout"), keyValuePairs("username",username,
+                    "response",response),
+                    new Response.Listener<JSONObject>() {
 
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        handleLogoutResponse(response);
-                    }
-                }, new Response.ErrorListener() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            handleLogoutResponse(response);
+                        }
+                    }, new Response.ErrorListener() {
 
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        sendCommandFailed("logout",error);
-                    }
-                });
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            sendCommandFailed("logout",error);
+                        }
+                    });
+        } catch (Exception ex) {
+            sendLogoutFailed(ex.getMessage());
+        }
     }
 
     private void handleLogoutResponse(JSONObject response){

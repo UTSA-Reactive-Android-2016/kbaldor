@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
         return ((EditText)findViewById(R.id.servername)).getText().toString();
     }
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onLoginFailed(String reason) {
-                Toast.makeText(MainActivity.this,"Not logged in!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this,"Not logged in : "+reason, Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -168,13 +167,13 @@ public class MainActivity extends AppCompatActivity {
     public void doLogin(View view) {
         serverAPI.setServerName(getServerName());
 
-        serverAPI.login("kbaldor",myCrypto);
+        serverAPI.login(getUserName(),myCrypto);
     }
 
     public void doLogout(View view) {
         serverAPI.setServerName(getServerName());
 
-        serverAPI.logout("kbaldor",myCrypto);
+        serverAPI.logout(getUserName(),myCrypto);
     }
 
     public void doRegisterContacts(View view){
@@ -183,13 +182,13 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<String> contacts = new ArrayList<>();
         contacts.add("alice");
         contacts.add("bob");
-        serverAPI.registerContacts("kbaldor",contacts);
+        serverAPI.registerContacts(getUserName(),contacts);
     }
 
     public void doStartPushListener(View view) {
         serverAPI.setServerName(getServerName());
 
-        serverAPI.startPushListener("kbaldor");
+        serverAPI.startPushListener(getUserName());
 
     }
 
