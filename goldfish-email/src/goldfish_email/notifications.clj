@@ -26,7 +26,7 @@
 (defn add-notification
   [notifications notification]
   (if (message? notification)
-    (conj notifications notification)
+    (if (< (count notifications) 100) (conj notifications notification))
     (conj (filter (not-user-log-in-out? (:username notification)) notifications) notification)))
 
 (defn deliver-notification
