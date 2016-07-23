@@ -9,6 +9,7 @@
          :host "192.168.0.10"
          ;:host "129.162.167.152"
          ;:host "172.24.1.218"
+         :port 25666
          }
   :main goldfish-email.core
   :profiles

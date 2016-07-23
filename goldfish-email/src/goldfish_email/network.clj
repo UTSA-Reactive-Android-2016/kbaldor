@@ -1,7 +1,7 @@
 (ns goldfish-email.network
   (:import (java.net NetworkInterface)))
 
-(def ips
+(defn ips []
   (as-> (NetworkInterface/getNetworkInterfaces) x
         (enumeration-seq x)
         (map #(bean %) x)
@@ -15,7 +15,7 @@
 (defn print-ips []
   (do
     (println "available IP addresses:")
-    (doseq [ip ips]
+    (doseq [ip (ips)]
       (println "    " ip))))
 
-(print-ips)
+(if false (print-ips))

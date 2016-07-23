@@ -113,8 +113,18 @@
   (swap! fake-user-keys assoc username key-pair)
   (register username image public-key64 public-key))
 
+(let [username "cathy"
+      key-pair (my-crypto/generate-key-pair)
+      public-key (.getPublic key-pair)
+      public-key64 (my-crypto/encode-public-key-string key-pair)
+      image        (Base64/encodeBase64String (IOUtils/toByteArray (io/input-stream (io/resource "cathy.png"))))
+      ]
+  (swap! fake-user-keys assoc username key-pair)
+  (register username image public-key64 public-key))
+
 
 (log-in "alice")
+(log-in "cathy")
 
 (add-watch current-users nil
            (fn [key ref old new]
@@ -183,6 +193,11 @@
                      15000)
     status/success))
 
+(defn send-chatty-emails [recipient]
+  (send-fake-email recipient "cathy" "5-second message" "This message will live for five seconds" 5000)
+  (send-fake-email recipient "cathy" "10-second message" "This message will live for ten seconds" 10000)
+  (send-fake-email recipient "cathy" "15-second message" "This message will live for fifteen seconds" 15000))
+
 (defn start-fake-users []
   (future
     (while true
@@ -191,6 +206,17 @@
         (log-in "bob")
         (Thread/sleep 5000)
         (log-out "bob"))))
+  (future
+    (while true
+      (do
+        (Thread/sleep 15000)
+        (println "Cathy sending messages")
+        (try
+          (doseq [friend (dosync (clojure.set/intersection (@friends-inv-map "cathy") @current-users))]
+           (println "Cathy sending to " friend)
+           (send-chatty-emails friend))
+          (catch Exception e
+            (println "Something went wrong :( " e))))))
 
   ;(future
   ;  (while true
@@ -200,3 +226,5 @@
   ;      (Thread/sleep 7000)
   ;      (log-out "alice"))))
   )
+
+(start-fake-users)
