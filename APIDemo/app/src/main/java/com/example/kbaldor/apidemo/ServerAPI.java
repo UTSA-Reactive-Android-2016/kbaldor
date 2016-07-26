@@ -307,7 +307,7 @@ public class ServerAPI {
         }
     }
 
-    public void registerContacts(String username, ArrayList<String> names){
+    public void registerContacts(String username, final ArrayList<String> names){
         final JSONObject json = new JSONObject();
         try {
             json.put("username",username);
@@ -317,6 +317,19 @@ public class ServerAPI {
                         @Override
                         public void onResponse(JSONObject jsonObject) {
                             Log.d(LOG, "register friends response " + jsonObject);
+                            try {
+                                JSONObject status = jsonObject.getJSONObject("friend-status-map");
+                                for(String friend : names){
+                                    if(status.getString(friend).equals("logged-in")){
+                                        sendContactLogin(friend);
+                                    } else {
+                                        sendContactLogout(friend);
+                                    }
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
                         }
                     },
                     new Response.ErrorListener() {
