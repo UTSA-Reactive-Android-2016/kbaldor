@@ -82,7 +82,7 @@
   (contains? @current-users username))
 
 
-(def fake-users (set (list "alice" "bob")))
+(def fake-users (set (list "alice" "bob" "charlie" "cathy")))
 
 (def fake-user-keys (atom {}))
 
@@ -194,9 +194,9 @@
     status/success))
 
 (defn send-chatty-emails [recipient]
-  (send-fake-email recipient "cathy" "5-second message" "This message will live for five seconds" 5000)
-  (send-fake-email recipient "cathy" "10-second message" "This message will live for ten seconds" 10000)
-  (send-fake-email recipient "cathy" "15-second message" "This message will live for fifteen seconds" 15000))
+  (send-fake-email recipient "cathy" "15-second message" "This message will live for fifteen seconds" 15000)
+  (send-fake-email recipient "cathy" "30-second message" "This message will live for thirty seconds" 30000)
+  (send-fake-email recipient "cathy" "60-second message" "This message will live for one minute" 60000))
 
 (defn start-fake-users []
   (future
