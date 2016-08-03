@@ -51,8 +51,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textSize="14pt"
-                android:text="Register Contacts"
+                android:text="Register Alice and Bob"
                 android:onClick="doRegisterContacts"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14pt"
+                android:text="Add Cathy"
+                android:onClick="doAddCathy"/>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="14pt"
+                android:text="Remove Cathy"
+                android:onClick="doRemoveCathy"/>
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

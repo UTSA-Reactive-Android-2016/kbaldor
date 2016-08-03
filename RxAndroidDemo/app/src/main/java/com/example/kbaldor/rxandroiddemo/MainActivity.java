@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        valueSubscription = Value.observeOn(AndroidSchedulers.mainThread())
+        valueSubscription = Value.subscribeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Integer>() {
                     @Override
                     public void onCompleted() {

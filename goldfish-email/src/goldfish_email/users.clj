@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io]
             [goldfish-email.crypto :as my-crypto]
             [goldfish-email.notifications :as notifications]
-            [goldfish-email.status :as status])
+            [goldfish-email.status :as status]
+            [clojure.set :refer :all])
   (:import [org.apache.commons.codec.binary Base64]
            [org.apache.commons.io IOUtils]))
 
@@ -33,9 +34,25 @@
 (defn set-friends
   [username friends]
   (dosync
-    (alter friends-map assoc username friends)
-    (doseq [friend friends]
+    (let [old-friends (friends-map username)]
+     (alter friends-map assoc username (set (intersection old-friends friends)))
+     (doseq [friend friends]
+       (alter friends-inv-map assoc friend (set (conj (friends-inv-map friend) username)))))))
+
+(defn add-friend
+  [username friend]
+  (dosync
+    (let [old-friends (friends-map username)]
+      (alter friends-map assoc username (set (conj old-friends friend)))
       (alter friends-inv-map assoc friend (set (conj (friends-inv-map friend) username))))))
+
+(defn remove-friend
+  [username friend]
+  (dosync
+    (let [old-friends (friends-map username)]
+      (alter friends-map assoc username (set (disj old-friends friend)))
+      (alter friends-inv-map assoc friend (set (disj (friends-inv-map friend) username))))))
+
 
 (defn get-login-status
   [friend]

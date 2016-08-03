@@ -182,7 +182,7 @@ public class ServerAPI {
         });
     }
 
-    public void login(final String username,final Crypto crypto) {
+    public void login(final String username) {
         if(serverKey!=null) {
             getStringCommand(makeURL("get-challenge", username),
                     new Response.Listener<String>() {
@@ -192,7 +192,7 @@ public class ServerAPI {
                             if(challenge.equals("user-not-registered")){
                                 sendLoginFailed("user not registered");
                             } else {
-                                processChallengeAndLogin(challenge, username, crypto);
+                                processChallengeAndLogin(challenge, username);
                             }
                         }
                     }, new Response.ErrorListener() {
@@ -207,9 +207,9 @@ public class ServerAPI {
     }
 
 
-    private void processChallengeAndLogin(final String challenge, final String username,final Crypto crypto) {
+    private void processChallengeAndLogin(final String challenge, final String username) {
         try {
-            byte[] decrypted = crypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
+            byte[] decrypted = myCrypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
             String response = Base64.encodeToString(Crypto.encryptRSA(decrypted, serverKey), Base64.NO_WRAP);
 
             putJSONCommand(makeURL("login"), keyValuePairs("username", username,
@@ -246,7 +246,7 @@ public class ServerAPI {
     }
 
 
-    public void logout(final String username,final Crypto crypto) {
+    public void logout(final String username) {
         if(serverKey!=null) {
             getStringCommand(makeURL("get-challenge", username),
                     new Response.Listener<String>() {
@@ -255,7 +255,7 @@ public class ServerAPI {
                             if(challenge.equals("user-not-registered")){
                                 sendLogoutFailed("user not registered");
                             } else {
-                                processChallengeAndLogout(challenge, username, crypto);
+                                processChallengeAndLogout(challenge, username);
                             }
                         }
                     }, new Response.ErrorListener() {
@@ -270,9 +270,9 @@ public class ServerAPI {
     }
 
 
-    private void processChallengeAndLogout(final String challenge, final String username,final Crypto crypto) {
+    private void processChallengeAndLogout(final String challenge, final String username) {
         try{
-            byte[] decrypted = crypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
+            byte[] decrypted = myCrypto.decryptRSA(Base64.decode(challenge, Base64.NO_WRAP));
             String response = Base64.encodeToString(Crypto.encryptRSA(decrypted,serverKey),Base64.NO_WRAP);
 
             putJSONCommand(makeURL("logout"), keyValuePairs("username",username,
@@ -342,6 +342,64 @@ public class ServerAPI {
             e.printStackTrace();
         }
     }
+
+    public void addContact(String username,final String friend){
+        final JSONObject json = new JSONObject();
+        try {
+            json.put("username",username);
+            json.put("friend",friend);
+            putJSONCommand(makeURL("add-friend"), json,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject jsonObject) {
+                            Log.d(LOG, "add friend response " + jsonObject);
+                            try {
+                                JSONObject status = jsonObject.getJSONObject("friend-status-map");
+                                if(status.getString(friend).equals("logged-in")){
+                                    sendContactLogin(friend);
+                                } else {
+                                    sendContactLogout(friend);
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError volleyError) {
+                            Log.d(LOG, "register friends error", volleyError);
+                        }
+                    });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void removeContact(String username,final String friend){
+        final JSONObject json = new JSONObject();
+        try {
+            json.put("username",username);
+            json.put("friend",friend);
+            putJSONCommand(makeURL("remove-friend"), json,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject jsonObject) {
+                            Log.d(LOG, "remove friend response " + jsonObject);
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError volleyError) {
+                            Log.d(LOG, "register friends error", volleyError);
+                        }
+                    });
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     /*
      * TODO: This currently only supports polling

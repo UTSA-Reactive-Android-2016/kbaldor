@@ -131,6 +131,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onMessageDelivered(String sender, String recipient, String subject, String body, long born_on_date, long time_to_live) {
                 Toast.makeText(MainActivity.this,String.format("got message from %s",sender),Toast.LENGTH_SHORT).show();
+                Log.d("MESSAGE","born on date "+born_on_date);
+                Log.d("MESSAGE","Got message with remaining TTL: "+(time_to_live-(System.currentTimeMillis() - born_on_date)));
 
             }
         });
@@ -167,13 +169,13 @@ public class MainActivity extends AppCompatActivity {
     public void doLogin(View view) {
         serverAPI.setServerName(getServerName());
 
-        serverAPI.login(getUserName(),myCrypto);
+        serverAPI.login(getUserName());
     }
 
     public void doLogout(View view) {
         serverAPI.setServerName(getServerName());
 
-        serverAPI.logout(getUserName(),myCrypto);
+        serverAPI.logout(getUserName());
     }
 
     public void doRegisterContacts(View view){
@@ -185,6 +187,17 @@ public class MainActivity extends AppCompatActivity {
         serverAPI.registerContacts(getUserName(),contacts);
     }
 
+    public void doAddCathy(View view){
+        serverAPI.setServerName(getServerName());
+        serverAPI.addContact(getUserName(),"cathy");
+    }
+
+    public void doRemoveCathy(View view){
+        serverAPI.setServerName(getServerName());
+        serverAPI.removeContact(getUserName(),"cathy");
+    }
+
+
     public void doStartPushListener(View view) {
         serverAPI.setServerName(getServerName());
 
@@ -195,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
     public void doGetAliceInfo(View view){
         serverAPI.setServerName(getServerName());
         serverAPI.getUserInfo("alice");
+        serverAPI.getUserInfo("bob");
     }
 
     public void doGetNobodyInfo(View view){
@@ -206,11 +220,11 @@ public class MainActivity extends AppCompatActivity {
     public void doSendMessageToAlice(View view){
         serverAPI.setServerName(getServerName());
 
-        if(myUserMap.containsKey("alice")) {
+        if(myUserMap.containsKey("bob")) {
             serverAPI.sendMessage(new Object(), // I don't have an object to keep track of, but I need one!
-                    myUserMap.get("alice").publicKey,
+                    myUserMap.get("bob").publicKey,
                     getUserName(),
-                    "alice",
+                    "bob",
                     "test message",
                     "test body",
                     System.currentTimeMillis(),
@@ -219,4 +233,21 @@ public class MainActivity extends AppCompatActivity {
             Log.d("Main","Alice info not available");
         }
     }
+
+//    public void doSendMessageToAlice(View view){
+//        serverAPI.setServerName(getServerName());
+//
+//        if(myUserMap.containsKey("alice")) {
+//            serverAPI.sendMessage(new Object(), // I don't have an object to keep track of, but I need one!
+//                    myUserMap.get("alice").publicKey,
+//                    getUserName(),
+//                    "alice",
+//                    "test message",
+//                    "test body",
+//                    System.currentTimeMillis(),
+//                    (long) 15000);
+//        } else {
+//            Log.d("Main","Alice info not available");
+//        }
+//    }
 }

@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import rx.schedulers.TimeInterval;
 
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
                 // now that we have the initial state, start polling for updates
 
                 Observable.interval(0,1, TimeUnit.SECONDS, Schedulers.newThread())
+                        .subscribeOn(AndroidSchedulers.mainThread())
                      //   .take(5) // would only poll five times
                      //   .takeWhile( <predicate> ) // could stop based on a flag variable
                         .subscribe(new Observer<Long>() {

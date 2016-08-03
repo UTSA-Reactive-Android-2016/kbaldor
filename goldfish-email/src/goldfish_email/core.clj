@@ -36,17 +36,18 @@
          username (get-in data ["username"])
          image (get-in data ["image"])
          image-bytes (Base64/decodeBase64 image)
-         key64 (get-in data ["public-key"])
-         key (my-crypto/decode-base64-rsa-public-key key64)]
-     (if (legal-username? username)
-       (if (not (special-username? username))
-         (if (im-proc/legal-png? image-bytes)
-           (do
-             (users/register username image key64 key)
-             status/success)
-           (status/fail (im-proc/png-issues image-bytes)))
-         (status/fail (format "username %s is reserved" username)))
-       (status/fail "username must begin with a letter and consist only of letters, numbers, and hyphens")))
+          key64 (get-in data ["public-key"])
+          key (my-crypto/decode-base64-rsa-public-key key64)]
+      (println username " registering")
+      (if (legal-username? username)
+        (if (not (special-username? username))
+          (if (im-proc/legal-png? image-bytes)
+            (do
+              (users/register username image key64 key)
+              status/success)
+            (status/fail (im-proc/png-issues image-bytes)))
+          (status/fail (format "username %s is reserved" username)))
+        (status/fail "username must begin with a letter and consist only of letters, numbers, and hyphens")))
     (catch Exception e
       (do
         (println "caught exception " e)
@@ -56,15 +57,49 @@
   [ctx]
   (try
     (let [body (slurp (get-in ctx [:request :body]))
-         json (json/read-str body)
-         username (get-in json ["username"])
-         friends (get-in json ["friends"])]
+          json (json/read-str body)
+          username (get-in json ["username"])
+          friends (get-in json ["friends"])]
       ;(println "body" body)
       ;(println username "has friends" friends)
      (users/set-friends username friends)
      (assoc status/success
             :friend-status-map
             (users/get-status-map friends)))
+    (catch Exception e
+      (do
+        (println "caught exception " e)
+        (status/fail (format "Caught exception on register-friends: %s" (.getMessage e)))))))
+
+(defn add-friend-handler
+  [ctx]
+  (try
+    (let [body (slurp (get-in ctx [:request :body]))
+          json (json/read-str body)
+          username (get-in json ["username"])
+          friend (get-in json ["friend"])]
+      ;(println "body" body)
+      ;(println username "has friends" friends)
+      (users/add-friend username friend)
+      (assoc status/success
+        :friend-status-map
+        (users/get-status-map #{friend})))
+    (catch Exception e
+      (do
+        (println "caught exception " e)
+        (status/fail (format "Caught exception on register-friends: %s" (.getMessage e)))))))
+
+(defn remove-friend-handler
+  [ctx]
+  (try
+    (let [body (slurp (get-in ctx [:request :body]))
+          json (json/read-str body)
+          username (get-in json ["username"])
+          friend (get-in json ["friend"])]
+      ;(println "body" body)
+      ;(println username "has friends" friends)
+      (users/remove-friend username friend)
+      status/success)
     (catch Exception e
       (do
         (println "caught exception " e)
@@ -205,6 +240,8 @@
            (PUT "/logout"                       []          (json-put-resource logout-handler))
            (PUT "/register"                     []          (json-put-resource register-handler))
            (PUT "/register-friends"             []          (json-put-resource register-friends-handler))
+           (PUT "/add-friend"                   []          (json-put-resource add-friend-handler))
+           (PUT "/remove-friend"                []          (json-put-resource remove-friend-handler))
            (PUT "/send-message/:recipient"      []          (json-put-resource send-message-handler))
            (GET "/get-contact-info/:username"   [username]  (json-get-resource (get-contact-info username)))
            (GET "/get-key"                      []          my-crypto/encoded-public-key-string)

@@ -9,5 +9,7 @@
 
 (defn get-users-table
   [ctx]
-  (format "<html><table>%s</table></html>" (clojure.string/join (map get-user-row (keys @users/user-info-map)))))
+  (do
+    (print "getting table for " (keys @users/user-info-map))
+    (format "<html><table>%s</table></html>" (clojure.string/join (map get-user-row (keys @users/user-info-map))))))
 
