@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/settings"
+        android:icon="@drawable/ic_settings_applications_black_24dp"
+        android:title="@string/account"
+        app:showAsAction="always"/>
+    <item android:id="@+id/contacts"
+        android:icon="@drawable/ic_account_box_black_24dp"
+        android:title="@string/contacts"
+        app:showAsAction="always"/>
+    <item android:id="@+id/compose"
+        android:icon="@drawable/ic_edit_black_24dp"
+        android:title="@string/compose"
+        app:showAsAction="always"/>
+</menu>

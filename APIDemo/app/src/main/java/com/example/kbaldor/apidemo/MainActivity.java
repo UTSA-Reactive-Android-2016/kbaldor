@@ -220,11 +220,11 @@ public class MainActivity extends AppCompatActivity {
     public void doSendMessageToAlice(View view){
         serverAPI.setServerName(getServerName());
 
-        if(myUserMap.containsKey("bob")) {
+        if(myUserMap.containsKey("alice")) {
             serverAPI.sendMessage(new Object(), // I don't have an object to keep track of, but I need one!
-                    myUserMap.get("bob").publicKey,
+                    myUserMap.get("alice").publicKey,
                     getUserName(),
-                    "bob",
+                    "alice",
                     "test message",
                     "test body",
                     System.currentTimeMillis(),

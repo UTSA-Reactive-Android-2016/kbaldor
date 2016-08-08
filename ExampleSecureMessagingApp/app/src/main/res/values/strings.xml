@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">GoldfishMail</string>
+    <string name="account">Account</string>
+    <string name="contacts">Contacts</string>
+    <string name="compose">Compose</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="settings_title">Settings</string>
+    <string name="title_activity_test">TestActivity</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="bunny_message">I don\'t know what\'s wrong with the camera so here\'s a picture of a bunny with a pancake on its head.</string>
+    <string name="bunny_button">Thanks!</string>
+    <string name="server_address">129.115.27.54:25666</string>
+    <string name="username">kbaldor</string>
+    <string name="register">Register</string>
+    <string name="login_settings">login_settings</string>
+    <string name="default_server_name">129.115.27.54</string>
+    <string name="default_server_port">25666</string>
+    <string name="server_port_key">server_port</string>
+    <string name="server_name_key">server_name</string>
+    <string name="log_in">Log In</string>
+    <string name="log_out">Log Out</string>
+    <string name="user_image_filename">user_image.png</string>
+    <string name="username_key">username</string>
+    <string name="default_username">Oolong</string>
+</resources>

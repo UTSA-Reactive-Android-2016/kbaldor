@@ -76,7 +76,6 @@ public class MainActivity extends AppCompatActivity {
     public void newMessage(View view){
         Log.d("ListViewTest","new message");
         adapter.add(new Message("New Message",5000));
-
     }
 
 //    TickThread thread;

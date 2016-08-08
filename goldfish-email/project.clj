@@ -7,8 +7,8 @@
   :ring {:handler goldfish-email.core/handler
          ;:host "172.24.1.190"
          ;:host "192.168.0.10"
-         :host "172.24.0.193"
-         ;:host "129.162.166.66"
+         ;:host "172.24.0.193"
+         :host "129.162.166.66"
          ;:host "172.24.1.218"
          :port 25666
          }
