@@ -27,6 +27,14 @@
         <activity
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity
+            android:name=".ReadActivity"
+            android:label="@string/title_activity_read"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity
+            android:name=".ContactsActivity"
+            android:label="@string/title_activity_contacts"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
     </application>
 

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="edu.utsa.cs.kbaldor.examplesecuremessagingapp.SettingsActivity">
+    tools:context="edu.utsa.cs.kbaldor.examplesecuremessagingapp.ReadActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -13,7 +13,7 @@
         android:theme="@style/AppBarOverlay">
 
         <android.support.v7.widget.Toolbar
-            android:id="@+id/settings_toolbar"
+            android:id="@+id/read_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/colorPrimary"
@@ -21,6 +21,5 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_settings" />
-
+    <include layout="@layout/content_read" />
 </android.support.design.widget.CoordinatorLayout>

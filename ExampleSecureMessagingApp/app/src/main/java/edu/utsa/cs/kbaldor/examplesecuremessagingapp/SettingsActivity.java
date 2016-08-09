@@ -46,7 +46,6 @@ public class SettingsActivity extends AppCompatActivity {
 
         Toolbar myToolbar = (Toolbar) findViewById(R.id.settings_toolbar);
         setSupportActionBar(myToolbar);
-        myToolbar.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
         myEngine = Engine.getInstance(getApplicationContext());
 
         File imFile = myEngine.getImageFileObject(user_image_filename);
@@ -175,7 +174,9 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void doLogin(View view){
+
         myEngine.logIn();
+        myEngine.registerContacts();
     }
 
     public void doLogout(View view){

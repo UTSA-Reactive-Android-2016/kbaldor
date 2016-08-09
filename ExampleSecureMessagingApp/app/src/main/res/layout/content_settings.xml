@@ -40,17 +40,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/register"
+        android:textSize="12pt"
         android:textAlignment="center"/>
     <Button
         android:onClick="doLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/log_in"
+        android:textSize="12pt"
         android:textAlignment="center"/>
     <Button
         android:onClick="doLogout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/log_out"
+        android:textSize="12pt"
         android:textAlignment="center"/>
 </LinearLayout>

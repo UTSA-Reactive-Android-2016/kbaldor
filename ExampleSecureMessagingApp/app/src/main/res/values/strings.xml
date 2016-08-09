@@ -22,4 +22,11 @@
     <string name="user_image_filename">user_image.png</string>
     <string name="username_key">username</string>
     <string name="default_username">Oolong</string>
+    <string name="title_activity_read">ReadActivity</string>
+    <string name="To">To:</string>
+    <string name="From">From:</string>
+    <string name="reply">Reply</string>
+    <string name="delete">Delete</string>
+    <string name="back">Back</string>
+    <string name="title_activity_contacts">ContactsActivity</string>
 </resources>

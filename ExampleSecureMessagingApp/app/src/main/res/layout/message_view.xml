@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <edu.utsa.cs.kbaldor.examplesecuremessagingapp.views.MessageView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="50pt"
+    android:layout_height="28pt"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     app:barColor="@color/colorAccentDark"
     app:backColor="@color/colorAccent"
     app:textColor="@color/colorText"
-    app:textSize="24pt"/>
+    app:textSize="12pt"/>

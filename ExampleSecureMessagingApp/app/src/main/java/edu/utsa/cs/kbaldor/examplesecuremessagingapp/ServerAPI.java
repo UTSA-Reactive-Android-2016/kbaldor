@@ -1,6 +1,7 @@
 package edu.utsa.cs.kbaldor.examplesecuremessagingapp;
 
 import android.content.Context;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -46,11 +47,16 @@ public class ServerAPI {
 
     Crypto myCrypto;
 
+    Handler mainHandler;
+
+
+
     public static ServerAPI getInstance(Context context, Crypto crypto) {
 
         if(ourInstance==null){
             ourInstance = new ServerAPI(context);
             ourInstance.myCrypto = crypto;
+            ourInstance.mainHandler = new Handler(context.getMainLooper());
         }
         return ourInstance;
     }
@@ -424,13 +430,24 @@ public class ServerAPI {
                 new Response.Listener<JSONObject>() {
 
                     @Override
-                    public void onResponse(JSONObject response) {
-                        handleNotifications(response);
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                    public void onResponse(final JSONObject response) {
+                        (new Thread() {
+                            public void run() {
+                                handleNotifications(response);
+
+                                try
+
+                                {
+                                    Thread.sleep(1000);
+                                } catch (
+                                        InterruptedException e
+                                        )
+
+                                {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }).start();
                     }
                 }, new Response.ErrorListener() {
 
@@ -475,17 +492,23 @@ public class ServerAPI {
         Log.d(LOG,"Got message "+message);
         try{
             SecretKey aesKey = Crypto.getAESSecretKeyFromBytes(myCrypto.decryptRSA(Base64.decode(message.getString("aes-key"), Base64.NO_WRAP)));
-            String sender = decryptAES64ToString(message.getString("sender"),aesKey);
-            String recipient = decryptAES64ToString(message.getString("recipient"),aesKey);
-            String body = decryptAES64ToString(message.getString("body"),aesKey);
-            String subject = decryptAES64ToString(message.getString("subject-line"),aesKey);
-            Long born = Long.parseLong(decryptAES64ToString(message.getString("born-on-date"),aesKey));
-            Long ttl = Long.parseLong(decryptAES64ToString(message.getString("time-to-live"),aesKey));
+            final String sender = decryptAES64ToString(message.getString("sender"),aesKey);
+            final String recipient = decryptAES64ToString(message.getString("recipient"),aesKey);
+            final String body = decryptAES64ToString(message.getString("body"),aesKey);
+            final String subject = decryptAES64ToString(message.getString("subject-line"),aesKey);
+            final Long born = Long.parseLong(decryptAES64ToString(message.getString("born-on-date"),aesKey));
+            final Long ttl = Long.parseLong(decryptAES64ToString(message.getString("time-to-live"),aesKey));
             Log.d(LOG,sender+" says:");
             Log.d(LOG,subject+":");
             Log.d(LOG,body);
             Log.d(LOG,"ttl: "+ttl);
-            sendMessageDelivered(sender,recipient,subject,body,born,ttl);
+            Runnable myRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    sendMessageDelivered(sender,recipient,subject,body,born,ttl);
+                } // This is your code
+            };
+            mainHandler.post(myRunnable);
         } catch (Exception e) {
             Log.d(LOG,"Failed to parse message",e);
         }
@@ -608,10 +631,12 @@ public class ServerAPI {
     public class UserInfo{
         public final String username;
         public final String image;
+        public final String publicKeyString;
         public final PublicKey publicKey;
         public UserInfo(String username, String image, String keyString){
             this.username = username;
             this.image = image;
+            this.publicKeyString = keyString;
             this.publicKey = Crypto.getPublicKeyFromString(keyString);
         }
     }

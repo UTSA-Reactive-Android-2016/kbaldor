@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+    <ImageView
+        android:id="@+id/contact_item_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        />
+    <TextView
+        android:id="@+id/contact_item_username"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textSize="12pt"
+        android:layout_weight="1"/>
+    <ImageButton
+        android:id="@+id/contact_item_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_settings_black_24dp"/>
+</LinearLayout>
