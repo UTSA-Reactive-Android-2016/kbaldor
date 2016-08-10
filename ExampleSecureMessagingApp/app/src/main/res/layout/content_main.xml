@@ -20,7 +20,5 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/message_recycler_view"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:divider="@android:color/transparent"
-        android:dividerHeight="10dp"/>
+        android:layout_height="match_parent" />
 </RelativeLayout>

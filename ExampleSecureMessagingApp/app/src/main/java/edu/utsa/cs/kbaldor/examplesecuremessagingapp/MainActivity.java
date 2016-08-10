@@ -1,6 +1,7 @@
 package edu.utsa.cs.kbaldor.examplesecuremessagingapp;
 
 import android.content.Intent;
+import android.graphics.Rect;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -54,6 +55,10 @@ public class MainActivity extends AppCompatActivity implements Engine.MessageSet
             @Override
             public void messageClicked(Message message) {
                 Log.d(LOG,"Got clicked message: "+message.subject);
+                Rect r = new Rect();
+                recyclerView.getLocalVisibleRect(r);
+
+                Log.d(LOG,"VisibleRect "+r);
                 Intent intent = new Intent(MainActivity.this, ReadActivity.class);
                 intent.putExtra("message_id",message.id);
                 startActivity(intent);

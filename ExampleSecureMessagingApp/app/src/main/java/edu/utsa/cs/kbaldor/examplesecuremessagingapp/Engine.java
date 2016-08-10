@@ -114,7 +114,7 @@ public class Engine implements ServerAPI.Listener {
         Log.d(LOG,"Writing to filename "+file.getAbsolutePath());
         //File outFile = new File(myApplicationContext.getFilesDir(),filename);
         try {
-            FileOutputStream outputStream = myApplicationContext.openFileOutput(file.getAbsolutePath(), Context.MODE_PRIVATE);
+            FileOutputStream outputStream = myApplicationContext.openFileOutput(filename, Context.MODE_PRIVATE);
             outputStream.write(image);
             outputStream.close();
         } catch (Exception e) {

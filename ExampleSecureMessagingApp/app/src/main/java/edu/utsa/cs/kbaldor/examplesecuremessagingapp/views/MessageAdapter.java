@@ -89,5 +89,13 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
         }
     }
 
+    // I found this on stack overflow. It fixes the rendering
+    // issue, but it probably eliminates the main advantage
+    // of using a recycler view. The items are reported to be
+    // of different types, so they are not reused.
+    //
+    @Override
+    public int getItemViewType(int position) {return position;}
+
 }
 
