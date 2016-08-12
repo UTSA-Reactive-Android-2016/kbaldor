@@ -331,7 +331,11 @@ public class Engine implements ServerAPI.Listener {
     @Override
     public void onMessageDelivered(String sender, String recipient, String subject, String body, long born_on_date, long time_to_live) {
         Log.d(LOG,"Message delived from "+sender+": "+subject);
-        myMessageList.add(new Message(nextId, sender, recipient, subject, body, born_on_date, time_to_live+60000));
+        Message m = new Message(nextId, sender, recipient, subject, body, born_on_date, time_to_live);
+        if(m.isExpired() || m.born_on_date>System.currentTimeMillis()){
+            m = new Message(nextId, sender, recipient, subject, body, System.currentTimeMillis(), time_to_live);
+        }
+        myMessageList.add(m);
         nextId++;
         notifyMessageSetChanged();
     }

@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.R;
@@ -173,6 +174,7 @@ public class MessageView extends View {
 
         int offset = (int)((barRight-barLeft)*(1-message.percentLeftToLive()));
 
+        //Log.d(LOG,"back paint "+backPaint.getColor());
         canvas.drawRect(barLeft, barTop, barRight, barBottom, backPaint);
         canvas.drawRect(barLeft+offset, barTop, barRight, barBottom, barPaint);
         canvas.drawText(message.sender, senderX, senderY, senderPaint);
