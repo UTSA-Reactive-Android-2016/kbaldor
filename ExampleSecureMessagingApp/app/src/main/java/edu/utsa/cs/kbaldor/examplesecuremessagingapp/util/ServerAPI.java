@@ -1,4 +1,4 @@
-package edu.utsa.cs.kbaldor.examplesecuremessagingapp;
+package edu.utsa.cs.kbaldor.examplesecuremessagingapp.util;
 
 import android.content.Context;
 import android.os.Handler;
@@ -662,6 +662,26 @@ public class ServerAPI {
                                 long born_on_date,
                                 long time_to_live);
 
+    }
+
+    public static class ListenerHelper implements Listener {
+
+        @Override public void onCommandFailed(String commandName, VolleyError volleyError) {}
+        @Override public void onGoodAPIVersion() {}
+        @Override public void onBadAPIVersion() {}
+        @Override public void onRegistrationSucceeded() {}
+        @Override public void onRegistrationFailed(String reason) {}
+        @Override public void onLoginSucceeded() {}
+        @Override public void onLoginFailed(String reason) {}
+        @Override public void onLogoutSucceeded() {}
+        @Override public void onLogoutFailed(String reason) {}
+        @Override public void onUserInfo(UserInfo info) {}
+        @Override public void onUserNotFound(String username) {}
+        @Override public void onContactLogin(String username) {}
+        @Override public void onContactLogout(String username) {}
+        @Override public void onSendMessageSucceeded(Object key) {}
+        @Override public void onSendMessageFailed(Object key, String reason) {}
+        @Override public void onMessageDelivered(String sender, String recipient, String subject, String body, long born_on_date, long time_to_live) {}
     }
 
     private ArrayList<Listener> myListeners = new ArrayList<>();

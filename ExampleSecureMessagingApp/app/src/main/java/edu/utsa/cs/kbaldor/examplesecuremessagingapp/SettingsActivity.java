@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import edu.utsa.cs.kbaldor.examplesecuremessagingapp.util.Engine;
+
 public class SettingsActivity extends AppCompatActivity {
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
     static final String LOG = "Settings";
@@ -174,7 +176,6 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void doLogin(View view){
-
         myEngine.logIn();
         myEngine.registerContacts();
     }

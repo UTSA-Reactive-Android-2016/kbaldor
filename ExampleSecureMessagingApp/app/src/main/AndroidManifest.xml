@@ -35,6 +35,14 @@
         <activity
             android:name=".ContactsActivity"
             android:label="@string/title_activity_contacts"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity
+            android:name=".AddContactActivity"
+            android:label="@string/title_activity_add_contact"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity
+            android:name=".DeleteContactActivity"
+            android:label="@string/title_activity_delete_contact"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
     </application>
 

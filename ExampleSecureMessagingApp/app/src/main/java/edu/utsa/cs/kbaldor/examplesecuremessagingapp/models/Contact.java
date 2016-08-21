@@ -6,7 +6,7 @@ import android.util.Base64;
 
 import java.security.PublicKey;
 
-import edu.utsa.cs.kbaldor.examplesecuremessagingapp.Crypto;
+import edu.utsa.cs.kbaldor.examplesecuremessagingapp.util.Crypto;
 
 /**
  * Created by kbaldor on 8/9/16.

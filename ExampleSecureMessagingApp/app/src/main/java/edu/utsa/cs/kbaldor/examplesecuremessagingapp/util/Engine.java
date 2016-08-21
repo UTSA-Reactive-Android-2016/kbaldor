@@ -1,4 +1,4 @@
-package edu.utsa.cs.kbaldor.examplesecuremessagingapp;
+package edu.utsa.cs.kbaldor.examplesecuremessagingapp.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.utsa.cs.kbaldor.examplesecuremessagingapp.R;
+import edu.utsa.cs.kbaldor.examplesecuremessagingapp.database.ContactsDB;
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.models.Contact;
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.models.Message;
 
@@ -38,6 +40,8 @@ public class Engine implements ServerAPI.Listener {
 
     private static Engine ourInstance;
 
+    ContactsDB myContactsDB;
+
     public static Engine getInstance(Context applicationContext) {
         if(ourInstance==null){
             ourInstance = new Engine(applicationContext);
@@ -45,9 +49,17 @@ public class Engine implements ServerAPI.Listener {
         return ourInstance;
     }
 
+    public ServerAPI getServerAPI(){
+        return myServerAPI;
+    }
+
     private Engine(Context applicationContext) {
         myApplicationContext = applicationContext;
         myResources = applicationContext.getResources();
+
+        myContactsDB = ContactsDB.getInstance(myApplicationContext);
+
+
         SharedPreferences preferences = applicationContext
                 .getSharedPreferences(
                         myResources.getString(R.string.login_settings),Context.MODE_PRIVATE);
@@ -72,6 +84,8 @@ public class Engine implements ServerAPI.Listener {
                         myResources.getString(R.string.default_username)));
 
         myServerAPI.registerListener(this);
+
+        loadContacts();
 
         startMessageCleaner();
         startPollingThread();
@@ -108,11 +122,10 @@ public class Engine implements ServerAPI.Listener {
         }
     }
 
-    void writeUserImage(String filename, byte[] image){
+    public void writeUserImage(String filename, byte[] image){
         File file = getImageFileObject(filename);
 
         Log.d(LOG,"Writing to filename "+file.getAbsolutePath());
-        //File outFile = new File(myApplicationContext.getFilesDir(),filename);
         try {
             FileOutputStream outputStream = myApplicationContext.openFileOutput(filename, Context.MODE_PRIVATE);
             outputStream.write(image);
@@ -122,7 +135,7 @@ public class Engine implements ServerAPI.Listener {
         }
     }
 
-    File getImageFileObject(String filename){
+    public File getImageFileObject(String filename){
         return new File(myApplicationContext.getFilesDir(),filename);
     }
 
@@ -200,19 +213,62 @@ public class Engine implements ServerAPI.Listener {
         myServerAPI.login(myServerAPI.getUsername());
     }
 
+    private void addUniqueContact(Contact contact){
+        boolean found=false;
+        for(int i=0;i<myContactList.size();i++){
+            if(myContactList.get(i).name.equals(contact.name)){
+                myContactList.set(i,contact);
+                found=true;
+            }
+        }
+        if(!found) myContactList.add(contact);
+    }
+
     public void addContact(Contact contact){
-        myContactList.add(contact);
+        myContactsDB.writeContact(contact);
+        addUniqueContact(contact);
         myServerAPI.addContact(myServerAPI.getUsername(),contact.name);
     }
 
+    public void removeContact(Contact contact){
+        myContactsDB.deleteContact(contact.name);
+        boolean found=false;
+        int index=0;
+        for(int i=0;i<myContactList.size();i++){
+            if(myContactList.get(i).name.equals(contact.name)){
+                index = i;
+                found=true;
+            }
+        }
+        if(found) myContactList.remove(index);
+        myServerAPI.removeContact(myServerAPI.getUsername(),contact.name);
+    }
+
+    public void loadContacts() {
+        List<Contact> contacts = myContactsDB.getAllContacts();
+
+        if(!contacts.isEmpty()){
+            Log.d("CONTACTS","Got contacts from the database");
+            for(Contact contact : contacts){
+                addUniqueContact(contact);
+            }
+        }
+    }
+
+
     public void registerContacts(){
         ArrayList<String> contacts = new ArrayList<>();
-        contacts.add("alice");
-        contacts.add("bob");
-        contacts.add("cathy");
-        for(String contact: contacts){
-            myServerAPI.getUserInfo(contact);
+
+        List<Contact> currentContacts = myContactsDB.getAllContacts();
+
+        if(!currentContacts.isEmpty()){
+            Log.d("CONTACTS","Got contacts from the database");
+            for(Contact contact : currentContacts){
+                contacts.add(contact.name);
+            }
+            myServerAPI.registerContacts(getUsername(), contacts);
         }
+
 
         //myServerAPI.removeContact(myServerAPI.getUsername(),"cathy");
         //myServerAPI.registerContacts(myServerAPI.getUsername(),contacts);
@@ -224,10 +280,10 @@ public class Engine implements ServerAPI.Listener {
         myServerAPI.logout(myServerAPI.getUsername());
     }
 
-    List<Message> getMessageList(){
+    public List<Message> getMessageList(){
         return myMessageList;
     }
-    List<Contact> getContactList(){
+    public List<Contact> getContactList(){
         return myContactList;
     }
 
@@ -284,7 +340,7 @@ public class Engine implements ServerAPI.Listener {
     @Override
     public void onUserInfo(ServerAPI.UserInfo info) {
         Log.d(LOG,"Adding contact with username "+info.username);
-        addContact(new Contact(info.username, info.publicKeyString, info.image));
+//        addContact(new Contact(info.username, info.publicKeyString, info.image));
     }
 
     @Override
@@ -338,6 +394,14 @@ public class Engine implements ServerAPI.Listener {
         myMessageList.add(m);
         nextId++;
         notifyMessageSetChanged();
+    }
+
+    public Contact getContactWithName(String name){
+        if(name==null) return null;
+        for(Contact contact : myContactList){
+            if(contact.name.equals(name)) return contact;
+        }
+        return null;
     }
 
     public Message getMessageWithID(long messageID) {

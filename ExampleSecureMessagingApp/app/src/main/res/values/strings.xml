@@ -30,4 +30,6 @@
     <string name="back">Back</string>
     <string name="title_activity_contacts">ContactsActivity</string>
     <string name="add_contact">Contacts</string>
+    <string name="title_activity_add_contact">AddContactActivity</string>
+    <string name="title_activity_delete_contact">DeleteContactActivity</string>
 </resources>

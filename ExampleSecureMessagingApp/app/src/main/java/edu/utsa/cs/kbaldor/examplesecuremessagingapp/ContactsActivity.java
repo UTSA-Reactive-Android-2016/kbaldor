@@ -2,19 +2,18 @@ package edu.utsa.cs.kbaldor.examplesecuremessagingapp;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.models.Contact;
-import edu.utsa.cs.kbaldor.examplesecuremessagingapp.models.Message;
+import edu.utsa.cs.kbaldor.examplesecuremessagingapp.util.Engine;
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.views.ContactAdapter;
-import edu.utsa.cs.kbaldor.examplesecuremessagingapp.views.MessageAdapter;
 
 public class ContactsActivity extends AppCompatActivity implements Engine.ContactsListener {
     static final String LOG = "Contacts";
@@ -46,14 +45,47 @@ public class ContactsActivity extends AppCompatActivity implements Engine.Contac
         contactAdapter.registerContactClickedListener(new ContactAdapter.ContactClickedListener() {
             @Override
             public void contactClicked(Contact contact) {
-                Log.d(LOG,"Got clicked contact: "+contact.name);
-//                Intent intent = new Intent(ContactsActivity.this, ContactActivity.class);
+                // COMPOSE
+//                Log.d(LOG,"Got clicked contact: "+contact.name);
+//                Intent intent = new Intent(ContactsActivity.this, DeleteContactActivity.class);
 //                intent.putExtra("contact_name",contact.name);
 //                startActivity(intent);
             }
         });
+        contactAdapter.registerEditClickedListener(new ContactAdapter.EditClickedListener() {
+            @Override
+            public void contactEditClicked(Contact contact) {
+                Log.d(LOG,"Got clicked contact: "+contact.name);
+                Intent intent = new Intent(ContactsActivity.this, DeleteContactActivity.class);
+                intent.putExtra("contact_name",contact.name);
+                startActivity(intent);
+            }
+        });
 
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.contacts_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        Intent intent;
+        switch (item.getItemId()) {
+            case R.id.contacts_menu_add:
+                intent = new Intent(this, AddContactActivity.class);
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+        startActivity(intent);
+        return true;
+    }
+
 
     @Override
     protected void onResume() {

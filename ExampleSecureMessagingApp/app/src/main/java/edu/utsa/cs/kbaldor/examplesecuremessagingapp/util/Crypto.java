@@ -1,4 +1,4 @@
-package edu.utsa.cs.kbaldor.examplesecuremessagingapp;
+package edu.utsa.cs.kbaldor.examplesecuremessagingapp.util;
 
 import android.content.SharedPreferences;
 import android.util.Base64;

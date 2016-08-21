@@ -11,16 +11,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-
-import java.util.List;
 
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.models.Message;
+import edu.utsa.cs.kbaldor.examplesecuremessagingapp.util.Engine;
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.views.MessageAdapter;
-import edu.utsa.cs.kbaldor.examplesecuremessagingapp.views.MessageView;
 
 public class MainActivity extends AppCompatActivity implements Engine.MessageSetListener {
 
