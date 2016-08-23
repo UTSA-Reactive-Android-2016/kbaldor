@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="edu.utsa.cs.kbaldor.examplesecuremessagingapp.AddContactActivity">
+    tools:context="edu.utsa.cs.kbaldor.examplesecuremessagingapp.ComposeActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -14,7 +14,6 @@
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
-            android:title="Add Contact"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/colorPrimary"
@@ -22,6 +21,6 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_add_contact" />
+    <include layout="@layout/content_compose" />
 
 </android.support.design.widget.CoordinatorLayout>

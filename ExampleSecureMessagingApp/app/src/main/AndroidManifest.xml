@@ -43,6 +43,10 @@
         <activity
             android:name=".DeleteContactActivity"
             android:label="@string/title_activity_delete_contact"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+        <activity
+            android:name=".ComposeActivity"
+            android:label="@string/title_activity_compose"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
     </application>
 

@@ -78,6 +78,9 @@ public class MainActivity extends AppCompatActivity implements Engine.MessageSet
             case R.id.contacts:
                 intent = new Intent(this, ContactsActivity.class);
                 break;
+            case R.id.compose:
+                intent = new Intent(this, ComposeActivity.class);
+                break;
             default:
                 return super.onOptionsItemSelected(item);
         }

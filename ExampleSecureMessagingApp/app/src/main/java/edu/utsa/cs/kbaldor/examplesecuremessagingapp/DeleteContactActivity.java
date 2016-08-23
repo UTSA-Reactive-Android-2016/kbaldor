@@ -28,6 +28,7 @@ public class DeleteContactActivity extends AppCompatActivity {
         setContentView(R.layout.activity_delete_contact);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        setTitle("Delete Contact?");
 
         engine = Engine.getInstance(getApplicationContext());
 

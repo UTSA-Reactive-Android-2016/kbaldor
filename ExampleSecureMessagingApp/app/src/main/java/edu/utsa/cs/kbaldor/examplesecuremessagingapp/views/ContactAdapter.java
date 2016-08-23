@@ -21,6 +21,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHold
     // This is named 'reference' as a reminder that the
     // data is allocated and managed elsewhere
     List<Contact> dataSetReference;
+    boolean chooser;
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -36,8 +37,9 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHold
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public ContactAdapter(List<Contact> dataset) {
+    public ContactAdapter(List<Contact> dataset, boolean chooser) {
         dataSetReference = dataset;
+        this.chooser = chooser;
     }
 
     // Create new views (invoked by the layout manager)
@@ -45,8 +47,11 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHold
     public ContactAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                         int viewType) {
         // create a new view
+        int layout = R.layout.contact_item;
+        if(chooser) layout = R.layout.contact_item_choose;
+
         View v = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.contact_item, parent, false);
+                .inflate(layout, parent, false);
         // set the view's size, margins, paddings and layout parameters
         final ViewHolder vh = new ViewHolder(v);
 
@@ -56,12 +61,14 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ViewHold
                 notifyContactClicked(vh.contact);
             }
         });
-        ((ImageButton)v.findViewById(R.id.contact_item_edit)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                notifyEditClicked(vh.contact);
-            }
-        });
+        if(!chooser) {
+            ((ImageButton) v.findViewById(R.id.contact_item_edit)).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    notifyEditClicked(vh.contact);
+                }
+            });
+        }
         return vh;
     }
 

@@ -29,6 +29,7 @@ public class ContactsActivity extends AppCompatActivity implements Engine.Contac
         setContentView(R.layout.activity_contacts);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        setTitle("Contacts");
 
         recyclerView = (RecyclerView) findViewById(R.id.contact_recycler_view);
 
@@ -39,17 +40,22 @@ public class ContactsActivity extends AppCompatActivity implements Engine.Contac
 
         myEngine = Engine.getInstance(getApplicationContext());
 
-        contactAdapter = new ContactAdapter(myEngine.getContactList());
+        contactAdapter = new ContactAdapter(myEngine.getContactList(), getCallingActivity()!=null);
         recyclerView.setAdapter(contactAdapter);
 
         contactAdapter.registerContactClickedListener(new ContactAdapter.ContactClickedListener() {
             @Override
             public void contactClicked(Contact contact) {
-                // COMPOSE
-//                Log.d(LOG,"Got clicked contact: "+contact.name);
-//                Intent intent = new Intent(ContactsActivity.this, DeleteContactActivity.class);
-//                intent.putExtra("contact_name",contact.name);
-//                startActivity(intent);
+                if(getCallingActivity()!=null){
+                    Intent data = new Intent();
+                    data.putExtra("username",contact.name);
+                    setResult(RESULT_OK, data);
+                    finish();
+                } else {
+                    Intent intent = new Intent(ContactsActivity.this, ComposeActivity.class);
+                    intent.putExtra("recipient",contact.name);
+                    startActivity(intent);
+                }
             }
         });
         contactAdapter.registerEditClickedListener(new ContactAdapter.EditClickedListener() {
@@ -66,8 +72,10 @@ public class ContactsActivity extends AppCompatActivity implements Engine.Contac
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.contacts_menu, menu);
+        if(getCallingActivity()==null) {
+            MenuInflater inflater = getMenuInflater();
+            inflater.inflate(R.menu.contacts_menu, menu);
+        }
         return true;
     }
 

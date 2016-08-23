@@ -44,6 +44,9 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        setTitle("Settings");
+
+
         user_image_filename =  getResources().getString(R.string.user_image_filename);
 
         Toolbar myToolbar = (Toolbar) findViewById(R.id.settings_toolbar);

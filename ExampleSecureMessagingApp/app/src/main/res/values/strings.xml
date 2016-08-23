@@ -32,4 +32,6 @@
     <string name="add_contact">Contacts</string>
     <string name="title_activity_add_contact">AddContactActivity</string>
     <string name="title_activity_delete_contact">DeleteContactActivity</string>
+    <string name="title_activity_compose">ComposeActivity</string>
+    <string name="send">Send</string>
 </resources>
