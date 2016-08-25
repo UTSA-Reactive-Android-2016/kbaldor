@@ -3,6 +3,7 @@ package edu.utsa.cs.kbaldor.examplesecuremessagingapp;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -46,6 +47,8 @@ public class DeleteContactActivity extends AppCompatActivity {
         username.setText(currentContact.name);
         imageView.setImageBitmap(currentContact.bitmap);
         publicKey.setText(currentContact.publicKeyString);
+
+        publicKey.setMovementMethod(new ScrollingMovementMethod());
     }
 
     public void doDeleteContact(View view){

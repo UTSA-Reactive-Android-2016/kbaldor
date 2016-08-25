@@ -23,7 +23,6 @@ public class Message {
         this.body = body;
         this.born_on_date = born_on_date;
         this.time_to_live = time_to_live;
-
     }
 
     public float percentLeftToLive() {
@@ -33,6 +32,9 @@ public class Message {
     }
 
     public boolean isExpired(){
+        return System.currentTimeMillis() > (born_on_date+time_to_live);
+    }
+    public static boolean isExpired(long born_on_date, long time_to_live){
         return System.currentTimeMillis() > (born_on_date+time_to_live);
     }
 }

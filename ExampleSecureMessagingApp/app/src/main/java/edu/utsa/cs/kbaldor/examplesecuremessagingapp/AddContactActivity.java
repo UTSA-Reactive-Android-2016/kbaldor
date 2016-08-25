@@ -6,6 +6,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
@@ -43,6 +44,8 @@ public class AddContactActivity extends AppCompatActivity {
         username = (EditText)findViewById(R.id.add_contact_username);
         imageView = (ImageView)findViewById(R.id.add_contact_user_image);
         publicKey = (TextView)findViewById(R.id.add_contact_public_key);
+
+        publicKey.setMovementMethod(new ScrollingMovementMethod());
 
         engine = Engine.getInstance(getApplicationContext());
         listener = new ServerAPI.ListenerHelper(){

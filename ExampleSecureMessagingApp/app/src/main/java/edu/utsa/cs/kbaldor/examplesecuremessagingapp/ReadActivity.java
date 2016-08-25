@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -42,6 +43,9 @@ public class ReadActivity extends AppCompatActivity {
         ((TextView)findViewById(R.id.read_sender_name)).setText(myMessage.sender);
         ((TextView)findViewById(R.id.read_subject)).setText(myMessage.subject);
         ((TextView)findViewById(R.id.read_body)).setText(myMessage.body);
+
+
+        ((TextView)findViewById(R.id.read_body)).setMovementMethod(new ScrollingMovementMethod());
 
     }
 

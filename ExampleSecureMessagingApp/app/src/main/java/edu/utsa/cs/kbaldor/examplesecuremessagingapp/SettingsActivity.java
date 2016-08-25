@@ -175,10 +175,12 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void doRegister(View view){
+        myEngine.setUsername(myUsername.getText().toString());
         myEngine.register();
     }
 
     public void doLogin(View view){
+        myEngine.setUsername(myUsername.getText().toString());
         myEngine.logIn();
         myEngine.registerContacts();
     }

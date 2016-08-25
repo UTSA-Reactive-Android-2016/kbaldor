@@ -40,6 +40,8 @@
         android:id="@+id/add_contact_public_key"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="10pt"
+        android:maxLines="3"
         android:hint="PublicKey"/>
     <Button
         android:id="@+id/save_button"

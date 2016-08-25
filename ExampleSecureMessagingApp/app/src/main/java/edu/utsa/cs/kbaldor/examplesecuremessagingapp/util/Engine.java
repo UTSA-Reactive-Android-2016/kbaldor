@@ -18,6 +18,7 @@ import java.util.List;
 
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.R;
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.database.ContactsDB;
+import edu.utsa.cs.kbaldor.examplesecuremessagingapp.database.MessagesDB;
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.models.Contact;
 import edu.utsa.cs.kbaldor.examplesecuremessagingapp.models.Message;
 
@@ -41,6 +42,7 @@ public class Engine implements ServerAPI.Listener {
     private static Engine ourInstance;
 
     ContactsDB myContactsDB;
+    MessagesDB myMessagesDB;
 
     public static Engine getInstance(Context applicationContext) {
         if(ourInstance==null){
@@ -58,7 +60,7 @@ public class Engine implements ServerAPI.Listener {
         myResources = applicationContext.getResources();
 
         myContactsDB = ContactsDB.getInstance(myApplicationContext);
-
+        myMessagesDB = MessagesDB.getInstance(myApplicationContext);
 
         SharedPreferences preferences = applicationContext
                 .getSharedPreferences(
@@ -86,6 +88,7 @@ public class Engine implements ServerAPI.Listener {
         myServerAPI.registerListener(this);
 
         loadContacts();
+        loadMessages();
 
         startMessageCleaner();
         startPollingThread();
@@ -183,6 +186,7 @@ public class Engine implements ServerAPI.Listener {
         ArrayList<Message> oldMessages = new ArrayList<>();
         for(Message message : myMessageList){
             if(message.isExpired()){
+                myMessagesDB.deleteMessage(message.id);
                 oldMessages.add(message);
             }
         }
@@ -255,6 +259,9 @@ public class Engine implements ServerAPI.Listener {
         }
     }
 
+    public void loadMessages() {
+        myMessageList = myMessagesDB.getAllMessages();
+    }
 
     public void registerContacts(){
         ArrayList<String> contacts = new ArrayList<>();
@@ -387,10 +394,10 @@ public class Engine implements ServerAPI.Listener {
     @Override
     public void onMessageDelivered(String sender, String recipient, String subject, String body, long born_on_date, long time_to_live) {
         Log.d(LOG,"Message delived from "+sender+": "+subject);
-        Message m = new Message(nextId, sender, recipient, subject, body, born_on_date, time_to_live);
-        if(m.isExpired() || m.born_on_date>System.currentTimeMillis()){
-            m = new Message(nextId, sender, recipient, subject, body, System.currentTimeMillis(), time_to_live);
+        if(Message.isExpired(born_on_date,time_to_live) || born_on_date>System.currentTimeMillis()){
+            born_on_date = System.currentTimeMillis();
         }
+        Message m = myMessagesDB.addMessage(sender, recipient, subject, body, born_on_date, time_to_live);
         myMessageList.add(m);
         nextId++;
         notifyMessageSetChanged();
@@ -412,6 +419,7 @@ public class Engine implements ServerAPI.Listener {
     }
 
     public void removeMessage(Message message) {
+        myMessagesDB.deleteMessage(message.id);
         myMessageList.remove(message);
         notifyMessageSetChanged();
     }

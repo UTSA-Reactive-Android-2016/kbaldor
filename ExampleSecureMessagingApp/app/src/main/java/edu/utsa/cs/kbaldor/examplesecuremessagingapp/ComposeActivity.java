@@ -79,9 +79,9 @@ public class ComposeActivity extends AppCompatActivity {
 
     private long getTTL(){
         switch(ttl.getSelectedItemPosition()){
-            case 0: return 15;
-            case 1: return 60;
-            case 2: return 3600;
+            case 0: return 15*1000;
+            case 1: return 60*1000;
+            case 2: return 3600*1000;
         }
         return 15;
     }

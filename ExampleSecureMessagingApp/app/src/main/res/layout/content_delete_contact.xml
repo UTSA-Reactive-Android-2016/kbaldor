@@ -32,6 +32,9 @@
         android:id="@+id/delete_contact_public_key"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="10pt"
+        android:maxLines="3"
+        android:scrollbars="vertical"
         android:hint="PublicKey"/>
     <Button
         android:id="@+id/delete_button"
