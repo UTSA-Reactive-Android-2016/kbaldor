@@ -212,7 +212,7 @@
           (do
            (users/handle-fake-email recipient json)
            status/success)
-          (notifications/deliver-message recipient body))))))
+          (notifications/deliver-message recipient json))))))
 
 (defn remove-user
   [username]

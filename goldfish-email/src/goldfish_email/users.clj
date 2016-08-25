@@ -244,4 +244,4 @@
   ;      (log-out "alice"))))
   )
 
-(start-fake-users)
+;(start-fake-users)
